@@ -104,7 +104,7 @@ export const createWebhook = (port: number = 3000): Application => {
               // Default response for other messages
               await lineService.replyMessage(event.replyToken, [{
                 type: 'text',
-                text: '👋สวัสดีจ้า... น้องเข้าใจ 💚 เองจ้า...\nถามวันว่างได้ ให้วัน ให้เดือน มาเลย\nหรือ ถามชั่วโมงทำการก็ได้ ⏰ ให้เล่าเรื่องตลกก็ได้นะ 😂\nแวะไปบ้านน้องได้น้า 🏠 https://KaoJai.ai'
+                text: '👋สวัสดีจ้า... น้องเข้าใจ 💚 เองจ้า...\nถามวันว่างได้ ให้วัน ให้เดือน มาเลย\nหรือ ถามชั่วโมงทำการก็ได้ ⏰ ให้เล่าเรื่องตลกก็ได้นะ 😂\nแวะไปบ้านน้องได้น้า 🏠 KaoJai.ai'
               }]);
             }
           }
