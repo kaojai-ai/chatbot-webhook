@@ -38,24 +38,20 @@ export const createWebhook = (port: number = 3000): Application => {
             const messageText = event.message.text;
             const intention = await checkAvailabilityIntention(messageText);
 
-            if (intention.hasAvailabilityIntent) {
+            if (intention.intent === 'availability') {
               // Handle availability check
-              const month = intention.details?.month ? parseInt(intention.details.month) : undefined;
-
-              // Send initial response
-              await lineService.replyMessage(event.replyToken, [{
-                type: 'text',
-                text: 'Checking availability...'
-              }]);
+              const date = intention.details?.date;
+              const month = intention.details?.month;
+              const year = intention.details?.year;
 
               try {
                 const availabilityService = new AvailabilityService();
-                const availability = await availabilityService.checkAvailability(month);
+                const availability = await availabilityService.getFormattedAvailability({ year, month, date });
 
-                // Send the translated response
+                // Send the response
                 await lineService.replyMessage(event.replyToken, [{
                   type: 'text',
-                  text: availability.message
+                  text: availability
                 }]);
               } catch (error) {
                 console.error('Error processing availability check:', error);

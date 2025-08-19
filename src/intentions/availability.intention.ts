@@ -1,9 +1,11 @@
 import OpenAI from 'openai';
 
 interface IntentionResult {
-  hasAvailabilityIntent: boolean;
+  intent: 'availability' | 'operating_hour' | 'other';
   details?: {
-    month?: string;
+    date?: number;
+    month?: number;
+    year?: number;
   };
 }
 
@@ -14,7 +16,7 @@ const openai = new OpenAI({
 export async function checkAvailabilityIntention(message: string): Promise<IntentionResult> {
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4', // or 'gpt-3.5-turbo' for cost efficiency
+      model: 'gpt-5-mini', // or 'gpt-3.5-turbo' for cost efficiency
       messages: [
         {
           role: 'system',
@@ -28,51 +30,59 @@ export async function checkAvailabilityIntention(message: string): Promise<Inten
       functions: [
         {
           name: 'check_availability',
-          description: 'Check if the user is asking about availability and extract details',
+          description: 'Checks if the user is asking about availability or operating hours and extracts availability information from user text.',
           parameters: {
             type: 'object',
             properties: {
-              has_availability_intent: {
-                type: 'boolean',
-                description: 'Whether the user is asking about availability'
+              user_text: {
+                type: "string",
+                description: "Text provided by the user regarding availability."
+              },
+              intent: {
+                type: 'string',
+                description: 'User intent, either "availability", "operating_hour" or "other"',
+                enum: [
+                  'availability',
+                  'operating_hour',
+                  'other'
+                ]
+              },
+              date: {
+                type: "integer",
+                description: "Day of the month as extracted from user text",
+                nullable: true
               },
               month: {
                 type: 'integer',
                 description: 'The month mentioned for the booking as a number from 1 (January) to 12 (December)',
                 nullable: true
               },
+              year: {
+                type: 'integer',
+                description: 'The year mentioned for the booking as a number',
+                nullable: true
+              },
             },
-            required: ['has_availability_intent']
+            required: ['intent']
           }
         }
       ],
       function_call: { name: 'check_availability' },
-      temperature: 0.1
     });
 
     const functionCall = response.choices[0]?.message?.function_call;
     if (!functionCall || functionCall.name !== 'check_availability' || !functionCall.arguments) {
-      return { hasAvailabilityIntent: false };
+      return { intent: "other" };
     }
 
     const args = JSON.parse(functionCall.arguments);
-    const details: IntentionResult['details'] = {};
-
-    if (args.month) details.month = args.month;
 
     return {
-      hasAvailabilityIntent: args.has_availability_intent,
-      ...(Object.keys(details).length > 0 && { details })
+      intent: args.intent,
+      ...(Object.keys(args).length > 0 && { details: { ...args } })
     };
   } catch (error) {
     console.error('Error checking availability intention with OpenAI:', error);
-    // Fallback to simple keyword matching if API call fails
-    const lowerMessage = message.toLowerCase();
-    const hasIntent = [
-      'available', 'availability', 'book', 'booking',
-      'reserve', 'reservation', 'vacancy', 'check availability'
-    ].some(keyword => lowerMessage.includes(keyword));
-
-    return { hasAvailabilityIntent: hasIntent };
+    throw error
   }
 }
