@@ -3,6 +3,7 @@ import * as line from '@line/bot-sdk';
 import { LineService } from '../services/line/line.service';
 import { LineMessageHandler } from '../services/line/line.handler';
 import { ILineConfig } from '../interfaces/line.interface';
+import { checkAvailabilityIntention } from '../intentions';
 
 // LINE client configuration
 const lineConfig: ILineConfig = {
@@ -32,11 +33,30 @@ export const createWebhook = (port: number = 3000): Application => {
         // Process events only after successful forwarding
         for (const event of events) {
           if (event.type === 'message' && event.message.type === 'text') {
-            // Send reply to user
-            await lineService.replyMessage(event.replyToken, [{
-              type: 'text',
-              text: 'Something to reply to user',
-            }]);
+            // Check user intention
+            const messageText = event.message.text;
+            const intention = await checkAvailabilityIntention(messageText);
+
+            if (intention.hasAvailabilityIntent) {
+              // Handle availability check
+              const responseText = intention.details?.date
+                ? `Checking availability for ${intention.details.date}...`
+                : 'Checking availability...';
+
+              await lineService.replyMessage(event.replyToken, [{
+                type: 'text',
+                text: responseText
+              }]);
+
+              // Here you would typically call your availability service
+              // For example: await availabilityService.checkAvailability(intention.details);
+            } else {
+              // Default response for other messages
+              await lineService.replyMessage(event.replyToken, [{
+                type: 'text',
+                text: 'How can I help you with your booking?'
+              }]);
+            }
           }
         }
         res.status(200).end();

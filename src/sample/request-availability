@@ -1,0 +1,5 @@
+curl --location --request POST 'https://portal.matchday-backend.com/portal/my-matches/10202' \
+--header 'content-type: application/json' \
+--header 'authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjY5MzI4LCJpYXQiOjE3NTU2MDkxNjksInN1YiI6IlVzZXIifQ.lRgWxbocmUheTC2ex-Wo_PqUiY6RP9G7-C8tr8B_450' \
+--header 'x-lang: th' \
+--data-raw '{"time_start":"2025-08-19 09:00:00.000","time_end":"2025-08-22 21:00:00.000"}'

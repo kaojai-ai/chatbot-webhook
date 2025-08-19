@@ -1,0 +1,621 @@
+[
+    {
+        "id": 1134,
+        "provider_id": 10202,
+        "sport_id": 30,
+        "calendar_view": null,
+        "auto_ticket": null,
+        "deposit_pay": 0,
+        "sport": {
+            "id": 30,
+            "available": 1,
+            "name": "สกี/สโนว์บอร์ด",
+            "name_en": "ski/snowboard",
+            "color": null,
+            "icon_backup": null,
+            "icon_blue_backup": null,
+            "marker_backup": "https://prod-media-as1.s3.ap-southeast-1.amazonaws.com/iconsport/iconsyndb/ski.png",
+            "photo_url_backup": null,
+            "icon": "https://prod-media-as1.s3.ap-southeast-1.amazonaws.com/iconsport/iconsyndb/ski1.jpg",
+            "icon_blue": null,
+            "marker": "https://prod-media-as1.s3.ap-southeast-1.amazonaws.com/iconsport/iconsyndb/ski1.jpg",
+            "photo_url": null
+        },
+        "courts": [
+            {
+                "id": 23240,
+                "court_type_id": 1362,
+                "provider_id": 10202,
+                "calendar_index": null,
+                "price": 2100,
+                "image": null,
+                "name": "Slope 1 [ Left ]",
+                "name_en": "Slope 1",
+                "sub_court_type_id": null,
+                "auto_ticket": null,
+                "hidden_app": 0,
+                "court_type": {
+                    "id": 1362,
+                    "provider_id": null,
+                    "provider_sport_id": 1134,
+                    "color": null,
+                    "name": "Slope",
+                    "name_en": "Slope",
+                    "type": "Indoor",
+                    "ground_type": null,
+                    "tag_sports": "null",
+                    "detail": null,
+                    "coupon": 0,
+                    "max_team_size": 5,
+                    "image": null,
+                    "depo_val": 0,
+                    "min_courts": null,
+                    "time_start": null,
+                    "time_end": null,
+                    "price": 2100,
+                    "child_court": 0,
+                    "parent_court_type_id": null,
+                    "share_court": 0,
+                    "child_court_type_id": null,
+                    "free_hour": 0,
+                    "overlap": 0,
+                    "hidden_app": 0
+                },
+                "matches": [
+                    {
+                        "id": 996342,
+                        "user_id": null,
+                        "court_id": 23240,
+                        "time_start": "2025-08-19 09:01:00",
+                        "time_end": "2025-08-19 10:00:00"
+                    },
+                    {
+                        "id": 940684,
+                        "user_id": 61260,
+                        "court_id": 23240,
+                        "time_start": "2025-08-19 10:01:00",
+                        "time_end": "2025-08-19 12:00:00"
+                    },
+                    {
+                        "id": 992063,
+                        "user_id": 61275,
+                        "court_id": 23240,
+                        "time_start": "2025-08-19 12:01:00",
+                        "time_end": "2025-08-19 13:00:00"
+                    },
+                    {
+                        "id": 959680,
+                        "user_id": null,
+                        "court_id": 23240,
+                        "time_start": "2025-08-19 13:01:00",
+                        "time_end": "2025-08-19 14:00:00"
+                    },
+                    {
+                        "id": 1010842,
+                        "user_id": 16072,
+                        "court_id": 23240,
+                        "time_start": "2025-08-19 14:01:00",
+                        "time_end": "2025-08-19 15:00:00"
+                    },
+                    {
+                        "id": 1053603,
+                        "user_id": 74917,
+                        "court_id": 23240,
+                        "time_start": "2025-08-19 15:01:00",
+                        "time_end": "2025-08-19 16:00:00"
+                    },
+                    {
+                        "id": 1026711,
+                        "user_id": null,
+                        "court_id": 23240,
+                        "time_start": "2025-08-19 16:01:00",
+                        "time_end": "2025-08-19 17:00:00"
+                    },
+                    {
+                        "id": 1033518,
+                        "user_id": null,
+                        "court_id": 23240,
+                        "time_start": "2025-08-19 17:01:00",
+                        "time_end": "2025-08-19 18:00:00"
+                    },
+                    {
+                        "id": 1033858,
+                        "user_id": 72397,
+                        "court_id": 23240,
+                        "time_start": "2025-08-19 18:01:00",
+                        "time_end": "2025-08-19 19:00:00"
+                    },
+                    {
+                        "id": 1038131,
+                        "user_id": 72924,
+                        "court_id": 23240,
+                        "time_start": "2025-08-19 19:01:00",
+                        "time_end": "2025-08-19 20:00:00"
+                    },
+                    {
+                        "id": 1042419,
+                        "user_id": null,
+                        "court_id": 23240,
+                        "time_start": "2025-08-19 20:01:00",
+                        "time_end": "2025-08-19 21:00:00"
+                    },
+                    {
+                        "id": 996362,
+                        "user_id": null,
+                        "court_id": 23240,
+                        "time_start": "2025-08-20 09:01:00",
+                        "time_end": "2025-08-20 10:00:00"
+                    },
+                    {
+                        "id": 1016576,
+                        "user_id": 69965,
+                        "court_id": 23240,
+                        "time_start": "2025-08-20 10:01:00",
+                        "time_end": "2025-08-20 12:00:00"
+                    },
+                    {
+                        "id": 1017704,
+                        "user_id": 65772,
+                        "court_id": 23240,
+                        "time_start": "2025-08-20 12:01:00",
+                        "time_end": "2025-08-20 13:00:00"
+                    },
+                    {
+                        "id": 934823,
+                        "user_id": 61051,
+                        "court_id": 23240,
+                        "time_start": "2025-08-20 13:01:00",
+                        "time_end": "2025-08-20 14:00:00"
+                    },
+                    {
+                        "id": 943699,
+                        "user_id": 62140,
+                        "court_id": 23240,
+                        "time_start": "2025-08-20 14:01:00",
+                        "time_end": "2025-08-20 15:00:00"
+                    },
+                    {
+                        "id": 976290,
+                        "user_id": null,
+                        "court_id": 23240,
+                        "time_start": "2025-08-20 15:01:00",
+                        "time_end": "2025-08-20 16:00:00"
+                    },
+                    {
+                        "id": 1034993,
+                        "user_id": 55488,
+                        "court_id": 23240,
+                        "time_start": "2025-08-20 16:01:00",
+                        "time_end": "2025-08-20 18:00:00"
+                    },
+                    {
+                        "id": 1038605,
+                        "user_id": 72497,
+                        "court_id": 23240,
+                        "time_start": "2025-08-20 18:01:00",
+                        "time_end": "2025-08-20 19:00:00"
+                    },
+                    {
+                        "id": 1039689,
+                        "user_id": 71579,
+                        "court_id": 23240,
+                        "time_start": "2025-08-20 19:01:00",
+                        "time_end": "2025-08-20 21:00:00"
+                    },
+                    {
+                        "id": 996411,
+                        "user_id": null,
+                        "court_id": 23240,
+                        "time_start": "2025-08-21 09:01:00",
+                        "time_end": "2025-08-21 10:00:00"
+                    },
+                    {
+                        "id": 966577,
+                        "user_id": 64316,
+                        "court_id": 23240,
+                        "time_start": "2025-08-21 10:01:00",
+                        "time_end": "2025-08-21 12:00:00"
+                    },
+                    {
+                        "id": 954797,
+                        "user_id": 60865,
+                        "court_id": 23240,
+                        "time_start": "2025-08-21 12:01:00",
+                        "time_end": "2025-08-21 13:00:00"
+                    },
+                    {
+                        "id": 959681,
+                        "user_id": null,
+                        "court_id": 23240,
+                        "time_start": "2025-08-21 13:01:00",
+                        "time_end": "2025-08-21 14:00:00"
+                    },
+                    {
+                        "id": 1006916,
+                        "user_id": 60877,
+                        "court_id": 23240,
+                        "time_start": "2025-08-21 14:01:00",
+                        "time_end": "2025-08-21 16:00:00"
+                    },
+                    {
+                        "id": 1011796,
+                        "user_id": null,
+                        "court_id": 23240,
+                        "time_start": "2025-08-21 16:01:00",
+                        "time_end": "2025-08-21 18:00:00"
+                    },
+                    {
+                        "id": 1033184,
+                        "user_id": null,
+                        "court_id": 23240,
+                        "time_start": "2025-08-21 18:01:00",
+                        "time_end": "2025-08-21 19:00:00"
+                    },
+                    {
+                        "id": 1039432,
+                        "user_id": 65898,
+                        "court_id": 23240,
+                        "time_start": "2025-08-21 19:01:00",
+                        "time_end": "2025-08-21 21:00:00"
+                    },
+                    {
+                        "id": 996264,
+                        "user_id": null,
+                        "court_id": 23240,
+                        "time_start": "2025-08-22 09:01:00",
+                        "time_end": "2025-08-22 10:00:00"
+                    },
+                    {
+                        "id": 999394,
+                        "user_id": null,
+                        "court_id": 23240,
+                        "time_start": "2025-08-22 10:01:00",
+                        "time_end": "2025-08-22 11:00:00"
+                    },
+                    {
+                        "id": 933882,
+                        "user_id": 51347,
+                        "court_id": 23240,
+                        "time_start": "2025-08-22 11:01:00",
+                        "time_end": "2025-08-22 14:00:00"
+                    },
+                    {
+                        "id": 1023009,
+                        "user_id": null,
+                        "court_id": 23240,
+                        "time_start": "2025-08-22 14:01:00",
+                        "time_end": "2025-08-22 15:00:00"
+                    },
+                    {
+                        "id": 976295,
+                        "user_id": null,
+                        "court_id": 23240,
+                        "time_start": "2025-08-22 15:01:00",
+                        "time_end": "2025-08-22 16:00:00"
+                    },
+                    {
+                        "id": 1035404,
+                        "user_id": 60832,
+                        "court_id": 23240,
+                        "time_start": "2025-08-22 16:01:00",
+                        "time_end": "2025-08-22 17:00:00"
+                    },
+                    {
+                        "id": 1063570,
+                        "user_id": null,
+                        "court_id": 23240,
+                        "time_start": "2025-08-22 17:01:00",
+                        "time_end": "2025-08-22 18:00:00"
+                    },
+                    {
+                        "id": 1038065,
+                        "user_id": 59010,
+                        "court_id": 23240,
+                        "time_start": "2025-08-22 18:01:00",
+                        "time_end": "2025-08-22 20:00:00"
+                    },
+                    {
+                        "id": 1022379,
+                        "user_id": 59325,
+                        "court_id": 23240,
+                        "time_start": "2025-08-22 20:01:00",
+                        "time_end": "2025-08-22 21:00:00"
+                    }
+                ],
+                "__meta__": {
+                    "through_provider_sport_id": 1134
+                }
+            },
+            {
+                "id": 23241,
+                "court_type_id": 1362,
+                "provider_id": 10202,
+                "calendar_index": null,
+                "price": 2100,
+                "image": null,
+                "name": "Slope 2 [ Right ]",
+                "name_en": "Slope 2",
+                "sub_court_type_id": null,
+                "auto_ticket": null,
+                "hidden_app": 0,
+                "court_type": {
+                    "id": 1362,
+                    "provider_id": null,
+                    "provider_sport_id": 1134,
+                    "color": null,
+                    "name": "Slope",
+                    "name_en": "Slope",
+                    "type": "Indoor",
+                    "ground_type": null,
+                    "tag_sports": "null",
+                    "detail": null,
+                    "coupon": 0,
+                    "max_team_size": 5,
+                    "image": null,
+                    "depo_val": 0,
+                    "min_courts": null,
+                    "time_start": null,
+                    "time_end": null,
+                    "price": 2100,
+                    "child_court": 0,
+                    "parent_court_type_id": null,
+                    "share_court": 0,
+                    "child_court_type_id": null,
+                    "free_hour": 0,
+                    "overlap": 0,
+                    "hidden_app": 0
+                },
+                "matches": [
+                    {
+                        "id": 996343,
+                        "user_id": null,
+                        "court_id": 23241,
+                        "time_start": "2025-08-19 09:01:00",
+                        "time_end": "2025-08-19 10:00:00"
+                    },
+                    {
+                        "id": 998853,
+                        "user_id": 68344,
+                        "court_id": 23241,
+                        "time_start": "2025-08-19 10:01:00",
+                        "time_end": "2025-08-19 12:00:00"
+                    },
+                    {
+                        "id": 1010835,
+                        "user_id": 16072,
+                        "court_id": 23241,
+                        "time_start": "2025-08-19 12:01:00",
+                        "time_end": "2025-08-19 13:00:00"
+                    },
+                    {
+                        "id": 959601,
+                        "user_id": 63359,
+                        "court_id": 23241,
+                        "time_start": "2025-08-19 13:01:00",
+                        "time_end": "2025-08-19 15:00:00"
+                    },
+                    {
+                        "id": 1022605,
+                        "user_id": null,
+                        "court_id": 23241,
+                        "time_start": "2025-08-19 15:01:00",
+                        "time_end": "2025-08-19 16:00:00"
+                    },
+                    {
+                        "id": 971408,
+                        "user_id": null,
+                        "court_id": 23241,
+                        "time_start": "2025-08-19 16:01:00",
+                        "time_end": "2025-08-19 17:00:00"
+                    },
+                    {
+                        "id": 1035863,
+                        "user_id": null,
+                        "court_id": 23241,
+                        "time_start": "2025-08-19 17:01:00",
+                        "time_end": "2025-08-19 18:00:00"
+                    },
+                    {
+                        "id": 1052856,
+                        "user_id": null,
+                        "court_id": 23241,
+                        "time_start": "2025-08-19 18:01:00",
+                        "time_end": "2025-08-19 19:00:00"
+                    },
+                    {
+                        "id": 1042680,
+                        "user_id": 73262,
+                        "court_id": 23241,
+                        "time_start": "2025-08-19 19:01:00",
+                        "time_end": "2025-08-19 20:00:00"
+                    },
+                    {
+                        "id": 1042420,
+                        "user_id": null,
+                        "court_id": 23241,
+                        "time_start": "2025-08-19 20:01:00",
+                        "time_end": "2025-08-19 21:00:00"
+                    },
+                    {
+                        "id": 996363,
+                        "user_id": null,
+                        "court_id": 23241,
+                        "time_start": "2025-08-20 09:01:00",
+                        "time_end": "2025-08-20 10:00:00"
+                    },
+                    {
+                        "id": 947969,
+                        "user_id": null,
+                        "court_id": 23241,
+                        "time_start": "2025-08-20 10:01:00",
+                        "time_end": "2025-08-20 12:00:00"
+                    },
+                    {
+                        "id": 977623,
+                        "user_id": 65906,
+                        "court_id": 23241,
+                        "time_start": "2025-08-20 12:01:00",
+                        "time_end": "2025-08-20 15:00:00"
+                    },
+                    {
+                        "id": 976291,
+                        "user_id": null,
+                        "court_id": 23241,
+                        "time_start": "2025-08-20 15:01:00",
+                        "time_end": "2025-08-20 16:00:00"
+                    },
+                    {
+                        "id": 1034994,
+                        "user_id": 55488,
+                        "court_id": 23241,
+                        "time_start": "2025-08-20 16:01:00",
+                        "time_end": "2025-08-20 18:00:00"
+                    },
+                    {
+                        "id": 1041675,
+                        "user_id": 69716,
+                        "court_id": 23241,
+                        "time_start": "2025-08-20 18:01:00",
+                        "time_end": "2025-08-20 19:00:00"
+                    },
+                    {
+                        "id": 1043302,
+                        "user_id": 73475,
+                        "court_id": 23241,
+                        "time_start": "2025-08-20 19:01:00",
+                        "time_end": "2025-08-20 20:00:00"
+                    },
+                    {
+                        "id": 1046333,
+                        "user_id": 73500,
+                        "court_id": 23241,
+                        "time_start": "2025-08-20 20:01:00",
+                        "time_end": "2025-08-20 21:00:00"
+                    },
+                    {
+                        "id": 996412,
+                        "user_id": null,
+                        "court_id": 23241,
+                        "time_start": "2025-08-21 09:01:00",
+                        "time_end": "2025-08-21 10:00:00"
+                    },
+                    {
+                        "id": 966578,
+                        "user_id": 64316,
+                        "court_id": 23241,
+                        "time_start": "2025-08-21 10:01:00",
+                        "time_end": "2025-08-21 12:00:00"
+                    },
+                    {
+                        "id": 1012588,
+                        "user_id": 65900,
+                        "court_id": 23241,
+                        "time_start": "2025-08-21 12:01:00",
+                        "time_end": "2025-08-21 13:00:00"
+                    },
+                    {
+                        "id": 1010123,
+                        "user_id": 69621,
+                        "court_id": 23241,
+                        "time_start": "2025-08-21 13:01:00",
+                        "time_end": "2025-08-21 14:00:00"
+                    },
+                    {
+                        "id": 1014666,
+                        "user_id": 63871,
+                        "court_id": 23241,
+                        "time_start": "2025-08-21 14:01:00",
+                        "time_end": "2025-08-21 16:00:00"
+                    },
+                    {
+                        "id": 1011797,
+                        "user_id": null,
+                        "court_id": 23241,
+                        "time_start": "2025-08-21 16:01:00",
+                        "time_end": "2025-08-21 18:00:00"
+                    },
+                    {
+                        "id": 1042911,
+                        "user_id": 71070,
+                        "court_id": 23241,
+                        "time_start": "2025-08-21 18:01:00",
+                        "time_end": "2025-08-21 21:00:00"
+                    },
+                    {
+                        "id": 996265,
+                        "user_id": null,
+                        "court_id": 23241,
+                        "time_start": "2025-08-22 09:01:00",
+                        "time_end": "2025-08-22 10:00:00"
+                    },
+                    {
+                        "id": 1012530,
+                        "user_id": null,
+                        "court_id": 23241,
+                        "time_start": "2025-08-22 10:01:00",
+                        "time_end": "2025-08-22 11:00:00"
+                    },
+                    {
+                        "id": 935135,
+                        "user_id": null,
+                        "court_id": 23241,
+                        "time_start": "2025-08-22 11:01:00",
+                        "time_end": "2025-08-22 12:00:00"
+                    },
+                    {
+                        "id": 1018417,
+                        "user_id": null,
+                        "court_id": 23241,
+                        "time_start": "2025-08-22 12:01:00",
+                        "time_end": "2025-08-22 13:00:00"
+                    },
+                    {
+                        "id": 1021486,
+                        "user_id": 70216,
+                        "court_id": 23241,
+                        "time_start": "2025-08-22 13:01:00",
+                        "time_end": "2025-08-22 15:00:00"
+                    },
+                    {
+                        "id": 976296,
+                        "user_id": null,
+                        "court_id": 23241,
+                        "time_start": "2025-08-22 15:01:00",
+                        "time_end": "2025-08-22 16:00:00"
+                    },
+                    {
+                        "id": 1043057,
+                        "user_id": 73521,
+                        "court_id": 23241,
+                        "time_start": "2025-08-22 16:01:00",
+                        "time_end": "2025-08-22 17:00:00"
+                    },
+                    {
+                        "id": 1031568,
+                        "user_id": null,
+                        "court_id": 23241,
+                        "time_start": "2025-08-22 17:01:00",
+                        "time_end": "2025-08-22 18:00:00"
+                    },
+                    {
+                        "id": 1038066,
+                        "user_id": 59010,
+                        "court_id": 23241,
+                        "time_start": "2025-08-22 18:01:00",
+                        "time_end": "2025-08-22 20:00:00"
+                    },
+                    {
+                        "id": 1040377,
+                        "user_id": 72970,
+                        "court_id": 23241,
+                        "time_start": "2025-08-22 20:01:00",
+                        "time_end": "2025-08-22 21:00:00"
+                    }
+                ],
+                "__meta__": {
+                    "through_provider_sport_id": 1134
+                }
+            }
+        ]
+    }
+]
