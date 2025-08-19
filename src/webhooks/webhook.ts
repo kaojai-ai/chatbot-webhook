@@ -1,6 +1,5 @@
 import express, { Request, Response, Application } from 'express';
 import * as line from '@line/bot-sdk';
-import fetch from 'node-fetch';
 import { LineService } from '../services/line/line.service';
 import { LineMessageHandler } from '../services/line/line.handler';
 import { ILineConfig } from '../interfaces/line.interface';
@@ -36,7 +35,7 @@ export const createWebhook = (port: number = 3000): Application => {
             // Send reply to user
             await lineService.replyMessage(event.replyToken, [{
               type: 'text',
-              text: 'Your message has been forwarded successfully!',
+              text: 'Something to reply to user',
             }]);
           }
         }
