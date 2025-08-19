@@ -83,11 +83,20 @@ export class AvailabilityService {
         const timeEnd = new Date(date);
 
         if (estimateDate.date) {
+            // If a specific date is provided, fetch 4 days before and after that date
             timeStart.setDate(day - 4);
             timeEnd.setDate(day + 4);
         } else {
-            timeStart.setMonth(month - 1, 1);
-            timeEnd.setMonth(month, 0);
+            // If both date and month are absent, fetch for 7 days from today
+            if (!estimateDate.month) {
+                const today = new Date();
+                const sevenDaysLater = new Date();
+                sevenDaysLater.setDate(today.getDate() + 6); // 7-day window including today
+                return {
+                    timeStart: today.toISOString().split('T')[0],
+                    timeEnd: sevenDaysLater.toISOString().split('T')[0],
+                };
+            }
         }
 
         return {
@@ -96,8 +105,7 @@ export class AvailabilityService {
         };
     }
 
-    async checkAvailability(estimateDate: EstAvailabilityDate): Promise<ProviderSport[]> {
-        const { timeStart, timeEnd } = this.getDates(estimateDate);
+    async checkAvailability({ timeStart, timeEnd }: { timeStart: string, timeEnd: string }): Promise<ProviderSport[]> {
 
         try {
             const response = await fetch(`${this.apiBaseUrl}/${this.providerId}`, {
@@ -226,7 +234,14 @@ export class AvailabilityService {
 
     async getFormattedAvailability(estimateDate: EstAvailabilityDate, language: string = 'Thai'): Promise<string> {
         try {
-            const availability = await this.checkAvailability(estimateDate);
+            // If only month is provided without a specific date, ask user to provide a datedate
+            if (!!estimateDate.month && !estimateDate.date) {
+                return '🙏รบกวน ช่วยใส่ ทั้งวัน และเดือน ที่ต้องการเช็คทีนะครับ ';
+            }
+
+            const rangeDate = this.getDates(estimateDate);
+
+            const availability = await this.checkAvailability(rangeDate);
             const formattedData = this.transformAvailabilityData(availability, estimateDate);
 
             const completion = await this.openai.chat.completions.create({
@@ -234,13 +249,15 @@ export class AvailabilityService {
                 messages: [
                     {
                         role: 'system',
-                        content: `You are a helpful assistant that formats ski/snowboard slope availability information.
-                     Respond with a very short, fun, clear, friendly message, with emoji in ${language} that summarizes the availability details.`
+                        content: `You are a helpful assistant man that formats ski/snowboard slope availability information.
+                     Respond with a very short, clear, friendly message, with emoji in ${language} that summarizes the availability details. Start by telling about the range user requested date in ${language}. If no availability, encourage user to input some date`
                     },
                     {
                         role: 'user',
-                        content: `These are the closest slot that still available (ว่าง), please provide a summary in ${language}:
-                     ${JSON.stringify(formattedData, null, 2)}`
+                        content: `These are the closest available slots to the requested date, please provide a summary in ${language}.
+Requested date context: ${JSON.stringify(rangeDate)}
+Availability (closest to the requested date):
+${JSON.stringify(formattedData, null, 2)}`
                     }
                 ],
             });
