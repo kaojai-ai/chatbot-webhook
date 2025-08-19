@@ -4,6 +4,7 @@ import { LineService } from '../services/line/line.service';
 import { LineMessageHandler } from '../services/line/line.handler';
 import { ILineConfig } from '../interfaces/line.interface';
 import { checkAvailabilityIntention } from '../intentions';
+import { AvailabilityService } from '../services/availability/availability.service';
 
 // LINE client configuration
 const lineConfig: ILineConfig = {
@@ -39,14 +40,30 @@ export const createWebhook = (port: number = 3000): Application => {
 
             if (intention.hasAvailabilityIntent) {
               // Handle availability check
-              const responseText = intention.details?.month
-                ? `Checking availability for ${intention.details.month}...`
-                : 'Checking availability...';
+              const month = intention.details?.month ? parseInt(intention.details.month) : undefined;
 
+              // Send initial response
               await lineService.replyMessage(event.replyToken, [{
                 type: 'text',
-                text: responseText
+                text: 'Checking availability...'
               }]);
+
+              try {
+                const availabilityService = new AvailabilityService();
+                const availability = await availabilityService.checkAvailability(month);
+
+                // Send the translated response
+                await lineService.replyMessage(event.replyToken, [{
+                  type: 'text',
+                  text: availability.message
+                }]);
+              } catch (error) {
+                console.error('Error processing availability check:', error);
+                await lineService.replyMessage(event.replyToken, [{
+                  type: 'text',
+                  text: 'Sorry, there was an error checking availability. Please try again later.'
+                }]);
+              }
 
               // Here you would typically call your availability service
               // For example: await availabilityService.checkAvailability(intention.details);
