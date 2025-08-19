@@ -1,5 +1,16 @@
 import OpenAI from 'openai';
 
+interface AvailableCourt {
+  date: string;
+  availableCourts: Array<{
+    courtName: string;
+    availableSlots: Array<{
+      start: string;
+      end: string;
+    }>;
+  }>;
+}
+
 interface CourtMatch {
     id: number;
     user_id: number | null;
@@ -117,27 +128,121 @@ export class AvailabilityService {
         }
     }
 
-    async getFormattedAvailability(estimateDate: EstAvailabilityDate, language: string = 'th'): Promise<string> {
-        try {
+    private transformAvailabilityData(availability: ProviderSport[], estimateDate: EstAvailabilityDate): AvailableCourt[] {
+        const result: AvailableCourt[] = [];
+        // Map<DateString, Map<CourtName, Array<{start: string, end: string}>>>
+        const dateToCourtVacantSlots = new Map<string, Map<string, Array<{ start: string; end: string }>>>();
 
+        // Helpers
+        const parseDateTime = (s: string) => new Date(s.replace(' ', 'T'));
+        const buildDateTime = (dateStr: string, timeStrHHmm: string) => new Date(`${dateStr}T${timeStrHHmm}:00`);
+        const overlaps = (aStart: Date, aEnd: Date, bStart: Date, bEnd: Date) => (aStart < bEnd && aEnd > bStart);
+
+        // Group matches by court and date, then compute vacant 1-hour slots between 09:00-21:00
+        availability.forEach((sport) => {
+            sport.courts.forEach((court) => {
+                // Group matches by date for this court
+                const matchesByDate = new Map<string, CourtMatch[]>();
+                court.matches.forEach((m) => {
+                    const d = m.time_start.split(' ')[0];
+                    if (!matchesByDate.has(d)) matchesByDate.set(d, []);
+                    matchesByDate.get(d)!.push(m);
+                });
+
+                // For each date, generate hourly slots and exclude booked ones
+                matchesByDate.forEach((matches, dateStr) => {
+                    // Prepare container
+                    if (!dateToCourtVacantSlots.has(dateStr)) {
+                        dateToCourtVacantSlots.set(dateStr, new Map());
+                    }
+                    const courtMap = dateToCourtVacantSlots.get(dateStr)!;
+
+                    const vacant: Array<{ start: string; end: string }> = [];
+
+                    for (let hour = 9; hour < 21; hour++) {
+                        const hh = hour.toString().padStart(2, '0');
+                        const nextHh = (hour + 1).toString().padStart(2, '0');
+                        const slotStartStr = `${hh}:00`;
+                        const slotEndStr = `${nextHh}:00`;
+
+                        const slotStart = buildDateTime(dateStr, slotStartStr);
+                        const slotEnd = buildDateTime(dateStr, slotEndStr);
+
+                        const isBooked = matches.some((m) => {
+                            const mStart = parseDateTime(m.time_start);
+                            const mEnd = parseDateTime(m.time_end);
+                            return overlaps(mStart, mEnd, slotStart, slotEnd);
+                        });
+
+                        if (!isBooked) {
+                            vacant.push({ start: slotStartStr, end: slotEndStr });
+                        }
+                    }
+
+                    if (vacant.length > 0) {
+                        courtMap.set(court.name, vacant);
+                    }
+                });
+            });
+        });
+
+        // Convert map to array and sort by date
+        const sortedDates = Array.from(dateToCourtVacantSlots.entries()).sort(
+            ([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime()
+        );
+
+        // Find the 3 closest dates to estimateDate
+        const targetDate = new Date(
+            estimateDate.year ?? new Date().getFullYear(),
+            (estimateDate.month ?? new Date().getMonth() + 1) - 1,
+            estimateDate.date ?? 1
+        );
+
+        const closestDates = sortedDates
+            .map(([date]) => ({ date, diff: Math.abs(new Date(date).getTime() - targetDate.getTime()) }))
+            .sort((a, b) => a.diff - b.diff)
+            .slice(0, 3)
+            .map((item) => item.date);
+
+        // Build the result array with only the closest dates and courts that have vacancies
+        closestDates.forEach((date) => {
+            const courtMap = dateToCourtVacantSlots.get(date);
+            if (courtMap) {
+                const availableCourts = Array.from(courtMap.entries())
+                    .map(([courtName, slots]) => ({ courtName, availableSlots: slots }))
+                    .filter((c) => c.availableSlots.length > 0);
+
+                if (availableCourts.length > 0) {
+                    result.push({
+                        date,
+                        availableCourts,
+                    });
+                }
+            }
+        });
+
+        return result;
+    }
+
+    async getFormattedAvailability(estimateDate: EstAvailabilityDate, language: string = 'Thai'): Promise<string> {
+        try {
             const availability = await this.checkAvailability(estimateDate);
+            const formattedData = this.transformAvailabilityData(availability, estimateDate);
 
             const completion = await this.openai.chat.completions.create({
-                model: 'gpt-4',
+                model: 'gpt-5-mini',
                 messages: [
                     {
                         role: 'system',
-                        content: `You are a helpful assistant that analyzes and formats ski/snowboard slope availability information.
-                     Respond with a clear, friendly message in ${language} that summarizes the availability details.
-                     Include available time slots, prices, and any other relevant information.`
+                        content: `You are a helpful assistant that formats ski/snowboard slope availability information.
+                     Respond with a very short, fun, clear, friendly message, with emoji in ${language} that summarizes the availability details.`
                     },
                     {
                         role: 'user',
-                        content: `Please analyze this ski slope availability data and provide a summary in ${language}:
-                     ${JSON.stringify(availability, null, 2)}`
+                        content: `These are the closest slot that still available (ว่าง), please provide a summary in ${language}:
+                     ${JSON.stringify(formattedData, null, 2)}`
                     }
                 ],
-                temperature: 0.7
             });
 
             return completion.choices[0]?.message?.content || 'Availability information is not available.';

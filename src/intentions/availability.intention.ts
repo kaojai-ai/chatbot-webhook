@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 
 interface IntentionResult {
-  intent: 'availability' | 'operating_hour' | 'other';
+  intent: 'availability' | 'operating_hour' | 'book' | 'joke' | 'other';
   details?: {
     date?: number;
     month?: number;
@@ -30,7 +30,7 @@ export async function checkAvailabilityIntention(message: string): Promise<Inten
       functions: [
         {
           name: 'check_availability',
-          description: 'Checks if the user is asking about availability or operating hours and extracts availability information from user text.',
+          description: 'Checks if the user is asking about user intention and extracts availability information from user text.',
           parameters: {
             type: 'object',
             properties: {
@@ -40,10 +40,12 @@ export async function checkAvailabilityIntention(message: string): Promise<Inten
               },
               intent: {
                 type: 'string',
-                description: 'User intent, either "availability", "operating_hour" or "other"',
+                description: 'User intent, either "availability", "operating_hour", "book", "joke" or "other"',
                 enum: [
                   'availability',
                   'operating_hour',
+                  'book',
+                  'joke',
                   'other'
                 ]
               },
