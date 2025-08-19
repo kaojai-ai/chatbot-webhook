@@ -1,44 +1,78 @@
+import OpenAI from 'openai';
+
 interface IntentionResult {
   hasAvailabilityIntent: boolean;
   details?: {
-    location?: string;
-    date?: string;
-    duration?: string;
+    month?: string;
   };
 }
 
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
 export async function checkAvailabilityIntention(message: string): Promise<IntentionResult> {
-  // Simple keyword matching for now
-  // In a real application, you would use OpenAI API here for better intent detection
-  const availabilityKeywords = [
-    'available', 'availability', 'book', 'booking',
-    'reserve', 'reservation', 'open', 'vacancy',
-    'slot', 'schedule', 'when can', 'can i book',
-    'is there availability', 'check availability'
-  ];
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4', // or 'gpt-3.5-turbo' for cost efficiency
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an AI assistant that helps identify if a user is asking about room availability and extracts relevant details.'
+        },
+        {
+          role: 'user',
+          content: message
+        }
+      ],
+      functions: [
+        {
+          name: 'check_availability',
+          description: 'Check if the user is asking about availability and extract details',
+          parameters: {
+            type: 'object',
+            properties: {
+              has_availability_intent: {
+                type: 'boolean',
+                description: 'Whether the user is asking about availability'
+              },
+              month: {
+                type: 'integer',
+                description: 'The month mentioned for the booking as a number from 1 (January) to 12 (December)',
+                nullable: true
+              },
+            },
+            required: ['has_availability_intent']
+          }
+        }
+      ],
+      function_call: { name: 'check_availability' },
+      temperature: 0.1
+    });
 
-  const lowerMessage = message.toLowerCase();
-  const hasIntent = availabilityKeywords.some(keyword => 
-    lowerMessage.includes(keyword)
-  );
+    const functionCall = response.choices[0]?.message?.function_call;
+    if (!functionCall || functionCall.name !== 'check_availability' || !functionCall.arguments) {
+      return { hasAvailabilityIntent: false };
+    }
 
-  // Simple extraction of details (can be enhanced with more sophisticated NLP)
-  const details: IntentionResult['details'] = {};
-  
-  // Simple date extraction (basic example)
-  const dateMatch = message.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})|(today|tomorrow|next week|next month)/i);
-  if (dateMatch) {
-    details.date = dateMatch[0];
+    const args = JSON.parse(functionCall.arguments);
+    const details: IntentionResult['details'] = {};
+
+    if (args.month) details.month = args.month;
+
+    return {
+      hasAvailabilityIntent: args.has_availability_intent,
+      ...(Object.keys(details).length > 0 && { details })
+    };
+  } catch (error) {
+    console.error('Error checking availability intention with OpenAI:', error);
+    // Fallback to simple keyword matching if API call fails
+    const lowerMessage = message.toLowerCase();
+    const hasIntent = [
+      'available', 'availability', 'book', 'booking',
+      'reserve', 'reservation', 'vacancy', 'check availability'
+    ].some(keyword => lowerMessage.includes(keyword));
+
+    return { hasAvailabilityIntent: hasIntent };
   }
-
-  // Simple location extraction (basic example)
-  const locationMatch = message.match(/in\s+(\w+)/i);
-  if (locationMatch) {
-    details.location = locationMatch[1];
-  }
-
-  return {
-    hasAvailabilityIntent: hasIntent,
-    ...(Object.keys(details).length > 0 && { details })
-  };
 }

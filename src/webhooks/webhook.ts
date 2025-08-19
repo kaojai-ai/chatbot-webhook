@@ -39,8 +39,8 @@ export const createWebhook = (port: number = 3000): Application => {
 
             if (intention.hasAvailabilityIntent) {
               // Handle availability check
-              const responseText = intention.details?.date
-                ? `Checking availability for ${intention.details.date}...`
+              const responseText = intention.details?.month
+                ? `Checking availability for ${intention.details.month}...`
                 : 'Checking availability...';
 
               await lineService.replyMessage(event.replyToken, [{
@@ -54,7 +54,7 @@ export const createWebhook = (port: number = 3000): Application => {
               // Default response for other messages
               await lineService.replyMessage(event.replyToken, [{
                 type: 'text',
-                text: 'How can I help you with your booking?'
+                text: 'สวัสดีจ้า... มีไรให้ช่วย? ถ้าอยากรู้วันว่า ก็ถามมาได้นะ ถามเฉยๆ หรือบอกเดือนมาเลยก็ได้'
               }]);
             }
           }
