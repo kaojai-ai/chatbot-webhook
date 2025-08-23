@@ -2,11 +2,11 @@
   "name": "simple-webhook-receiver",
   "version": "1.0.0",
   "description": "A simple webhook receiver that logs to console",
-  "main": "dist/index.js",
+  "main": "index.ts",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
+    "start": "node api/index.ts",
+    "dev": "ts-node-dev --respawn --transpile-only api/index.ts"
   },
   "dependencies": {
     "@line/bot-sdk": "^10.1.2",
@@ -22,7 +22,5 @@
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.0"
   },
-  "engines": {
-    "node": ">=14.0.0"
-  }
+  "type": "commonjs"
 }
