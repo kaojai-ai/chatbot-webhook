@@ -87,8 +87,16 @@ export class AvailabilityService {
             timeStart.setDate(day - 4);
             timeEnd.setDate(day + 4);
         } else {
-            // If both date and month are absent, fetch for 7 days from today
-            if (!estimateDate.month) {
+            // If only month is provided (no specific date), fetch the entire month
+            if (estimateDate.month) {
+                const firstDay = new Date(year, month - 1, 1);
+                const lastDay = new Date(year, month, 0); // last day of the month
+                return {
+                    timeStart: firstDay.toISOString().split('T')[0],
+                    timeEnd: lastDay.toISOString().split('T')[0],
+                };
+            } else {
+                // If both date and month are absent, fetch for 7 days from today
                 const today = new Date();
                 const sevenDaysLater = new Date();
                 sevenDaysLater.setDate(today.getDate() + 6); // 7-day window including today
@@ -234,11 +242,6 @@ export class AvailabilityService {
 
     async getFormattedAvailability(estimateDate: EstAvailabilityDate, language: string = 'Thai'): Promise<string> {
         try {
-            // If only month is provided without a specific date, ask user to provide a datedate
-            if (!!estimateDate.month && !estimateDate.date) {
-                return '🙏รบกวน ช่วยใส่ ทั้งวัน และเดือน ที่ต้องการเช็คทีนะครับ ';
-            }
-
             const rangeDate = this.getDates(estimateDate);
 
             const availability = await this.checkAvailability(rangeDate);
