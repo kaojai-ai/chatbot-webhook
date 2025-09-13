@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import logger from '../../../shared/logger';
 
 interface AvailableCourt {
   date: string;
@@ -114,7 +115,7 @@ export class AvailabilityService {
     }
 
     async checkAvailability({ timeStart, timeEnd }: { timeStart: string, timeEnd: string }): Promise<ProviderSport[]> {
-
+        logger.info({ timeStart, timeEnd }, `[Supplier API] Checking availability for time range: ${timeStart} - ${timeEnd}`);
         try {
             const response = await fetch(`${this.apiBaseUrl}/${this.providerId}`, {
                 method: 'POST',
@@ -139,7 +140,7 @@ export class AvailabilityService {
             const data: ProviderSport[] = await response.json();
             return data;
         } catch (error) {
-            console.error('Error checking availability:', error);
+            logger.error(error, 'Error checking availability: %s', String(error));
             throw new Error('Failed to check availability. Please try again later.');
         }
     }
@@ -237,11 +238,13 @@ export class AvailabilityService {
             }
         });
 
+        logger.info(`[Supplier API] Availability Found ${result.length} available courts`);
         return result;
     }
 
     async getFormattedAvailability(estimateDate: EstAvailabilityDate, language: string = 'Thai'): Promise<string> {
         try {
+            logger.info({ ...estimateDate }, '[Supplier API] Formatting availability response')
             const rangeDate = this.getDates(estimateDate);
 
             const availability = await this.checkAvailability(rangeDate);
@@ -267,7 +270,7 @@ ${JSON.stringify(formattedData, null, 2)}`
 
             return completion.choices[0]?.message?.content || 'Availability information is not available.';
         } catch (error) {
-            console.error('Error getting formatted availability:', error);
+            logger.error(error, 'Error getting formatted availability: %s', String(error));
             return 'Sorry, we encountered an error while checking availability. Please try again later.';
         }
     }

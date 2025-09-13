@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import supabaseClient from '../../../shared/providers/supabase';
+import logger from '../../../shared/logger';
 
 interface AvailableCourt {
   date: string;
@@ -81,6 +82,7 @@ export class SupabaseAvailabilityService {
     }
 
     async checkAvailability({ timeStart, timeEnd }: { timeStart: string; timeEnd: string }): Promise<Map<string, Map<string, Array<{ start: string; end: string }>>>> {
+        logger.info({ timeStart, timeEnd }, '[Database] Checking availability for time range: %s - %s', timeStart, timeEnd)
         const tenantId = process.env.BOOKING_TENANT_ID;
         if (!tenantId) {
             throw new Error('BOOKING_TENANT_ID env is required');
@@ -183,11 +185,14 @@ export class SupabaseAvailabilityService {
             }
         });
 
+        logger.info('[Database] Availability result %s', result.length)
         return result;
     }
 
     async getFormattedAvailability(estimateDate: EstAvailabilityDate, language: string = 'Thai'): Promise<string> {
         try {
+            logger.info({ ...estimateDate }, '[Database] Formatting availability response')
+
             const rangeDate = this.getDates(estimateDate);
 
             const availability = await this.checkAvailability(rangeDate);
@@ -213,7 +218,7 @@ ${JSON.stringify(formattedData, null, 2)}`
 
             return completion.choices[0]?.message?.content || 'Availability information is not available.';
         } catch (error) {
-            console.error('Error getting formatted availability:', error);
+            logger.error(error, 'Error getting formatted availability: %s', String(error));
             return 'Sorry, we encountered an error while checking availability. Please try again later.';
         }
     }

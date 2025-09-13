@@ -6,6 +6,7 @@ import { ILineConfig } from '../interfaces/line.interface';
 import { checkAvailabilityIntention } from '../intentions';
 import { AvailabilityService } from '../services/availability';
 import OpenAI from 'openai';
+import logger from '../../shared/logger';
 
 // LINE client configuration
 const lineConfig: ILineConfig = {
@@ -33,12 +34,12 @@ export const createWebhook = (port: number = 3000): Application => {
   app.post('/webhook', async (req: Request, res: Response) => {
     try {
       const events: line.WebhookEvent[] = req.body.events;
-      console.log('Received webhook events:', events);
 
       try {
         // Process events only after successful forwarding
         for (const event of events) {
           if (event.type === 'message' && event.message.type === 'text') {
+            logger.info({ type: event.type, message: event.message.text }, 'Received webhook user message %s', event.message.text);
             // Check user intention
             const messageText = event.message.text;
             const intention = await checkAvailabilityIntention(messageText);
@@ -59,7 +60,7 @@ export const createWebhook = (port: number = 3000): Application => {
                   text: availability
                 }]);
               } catch (error) {
-                console.error('Error processing availability check:', error);
+                logger.error(error, 'Error processing availability check: %s', String(error));
                 await lineService.replyMessage(event.replyToken, [{
                   type: 'text',
                   text: 'Sorry, there was an error checking availability. Please try again later.'
@@ -87,7 +88,7 @@ export const createWebhook = (port: number = 3000): Application => {
                 const joke = completion.choices[0]?.message?.content?.trim() || 'ขำ ๆ 😂';
                 await lineService.replyMessage(event.replyToken, [{ type: 'text', text: joke }]);
               } catch (error) {
-                console.error('Error fetching joke from OpenAI:', error);
+                logger.error(error, 'Error fetching joke from OpenAI: %s', String(error));
                 await lineService.replyMessage(event.replyToken, [{
                   type: 'text',
                   text: 'ขอโทษด้วยนะ ตอนนี้เล่าเรื่องตลกไม่ได้ ลองใหม่อีกครั้งได้เลยครับ/ค่ะ 🙏'
@@ -110,20 +111,20 @@ export const createWebhook = (port: number = 3000): Application => {
         }
         res.status(200).end();
       } catch (error) {
-        console.error('Error forwarding request:', error);
+        logger.error(error, 'Error forwarding request: %s', String(error));
         res.status(500).json({ error: 'Error forwarding request' });
       }
     } catch (error) {
-      console.error('Error processing webhook:', error);
+      logger.error(error, 'Error processing webhook: %s', String(error));
       res.status(500).json({ error: 'Internal server error' });
     }
   });
 
   // Start the server
   app.listen(port, () => {
-    console.log(`Webhook 1 server is running on http://localhost:${port}`);
-    console.log(`Webhook 1 endpoint: http://localhost:${port}/webhook`);
-    console.log(`Health check: http://localhost:${port}/health`);
+    logger.info(`Webhook 1 server is running on http://localhost:${port}`);
+    logger.info(`Webhook 1 endpoint: http://localhost:${port}/webhook`);
+    logger.info(`Health check: http://localhost:${port}/health`);
   });
 
   return app;

@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import logger from '../../shared/logger';
 
 interface IntentionResult {
   intent: 'availability' | 'operating_hour' | 'book' | 'joke' | 'other';
@@ -79,12 +80,13 @@ export async function checkAvailabilityIntention(message: string): Promise<Inten
 
     const args = JSON.parse(functionCall.arguments);
 
+    logger.info({ ...args }, 'Intention result from OpenAI: %s', args.intent);
     return {
       intent: args.intent,
       ...(Object.keys(args).length > 0 && { details: { ...args } })
     };
   } catch (error) {
-    console.error('Error checking availability intention with OpenAI:', error);
+    logger.error(error, 'Error checking availability intention with OpenAI: %s', String(error));
     throw error
   }
 }
