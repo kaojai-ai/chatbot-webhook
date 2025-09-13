@@ -70,6 +70,20 @@ export class AvailabilityService {
         this.providerId = process.env.PROVIDER_ID || '10202';
     }
 
+    private isPastDate(estimateDate: EstAvailabilityDate): boolean {
+        const today = new Date();
+        const year = estimateDate.year ?? today.getFullYear();
+        const month = estimateDate.month ?? today.getMonth() + 1;
+        if (year < today.getFullYear()) return true;
+        if (year === today.getFullYear() && month < today.getMonth() + 1) return true;
+        if (estimateDate.date) {
+            const requested = new Date(year, month - 1, estimateDate.date);
+            const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            if (requested < startOfToday) return true;
+        }
+        return false;
+    }
+
     private getDates(estimateDate: EstAvailabilityDate): { timeStart: string, timeEnd: string } {
         const date = new Date();
         const year = estimateDate.year ?? date.getFullYear();
@@ -92,8 +106,13 @@ export class AvailabilityService {
             if (estimateDate.month) {
                 const firstDay = new Date(year, month - 1, 1);
                 const lastDay = new Date(year, month, 0); // last day of the month
+                const today = new Date();
+                const start =
+                    year === today.getFullYear() && month === today.getMonth() + 1
+                        ? today
+                        : firstDay;
                 return {
-                    timeStart: firstDay.toISOString().split('T')[0],
+                    timeStart: start.toISOString().split('T')[0],
                     timeEnd: lastDay.toISOString().split('T')[0],
                 };
             } else {
@@ -106,6 +125,10 @@ export class AvailabilityService {
                     timeEnd: sevenDaysLater.toISOString().split('T')[0],
                 };
             }
+        }
+        const today = new Date();
+        if (timeStart < today) {
+            timeStart.setTime(today.getTime());
         }
 
         return {
@@ -245,6 +268,10 @@ export class AvailabilityService {
     async getFormattedAvailability(estimateDate: EstAvailabilityDate, language: string = 'Thai'): Promise<string> {
         try {
             logger.info({ ...estimateDate }, '[Supplier API] Formatting availability response')
+            if (this.isPastDate(estimateDate)) {
+                return 'The requested date is already in the past.';
+            }
+
             const rangeDate = this.getDates(estimateDate);
 
             const availability = await this.checkAvailability(rangeDate);
