@@ -3,8 +3,6 @@ import PinoPretty from 'pino-pretty';
 import pinoLoki, { LokiOptions } from 'pino-loki';
 import { getTenantStore } from './tenantContext';
 import { isDev, serviceName } from './development';
-import { Transform } from 'stream';
-import { OnUnknown } from 'pino-abstract-transport';
 
 const isVercel = Boolean(process.env.VERCEL);
 
@@ -15,40 +13,46 @@ const lokiHost = process.env.GRAFANA_LOKI_HOST;
 const lokiUsername = process.env.GRAFANA_LOKI_USERNAME;
 const lokiPassword = process.env.GRAFANA_LOKI_PASSWORD;
 
-const logStreams: (Transform & OnUnknown)[] = (isVercel) ?
-  [PinoPretty({
-    colorize: false,
-    singleLine: true,
-    ignore: 'pid,hostname,env,service,version',   // hide noise
-    messageFormat: "{msg}"
-  })] : [PinoPretty({
-    colorize: true,
-    // singleLine: true,
-    translateTime: 'HH:MM:ss.l',
-    ignore: 'pid,hostname,env,service,version',   // hide noise
-  })]
+const logStreams = (isVercel) ?
+  [{
+    level: LOG_LEVEL as pino.Level, stream: PinoPretty({
+      colorize: false,
+      singleLine: true,
+      ignore: 'pid,hostname,env,service,version',   // hide noise
+      messageFormat: "{msg}"
+    })
+  }] : [{
+    level: LOG_LEVEL as pino.Level, stream: PinoPretty({
+      colorize: true,
+      // singleLine: true,
+      translateTime: 'HH:MM:ss.l',
+      ignore: 'pid,hostname,env,service,version',   // hide noise
+    })
+  }]
 
 
 if (lokiHost && lokiPassword && lokiUsername) {
-  logStreams.push(pinoLoki({
-    batching: true,
-    interval: 5,
-    host: lokiHost,
-    basicAuth: {
-      username: lokiUsername,
-      password: lokiPassword,
-    },
-    structuredMetaKey: 'meta',
-    convertArrays: true,
-    labels: {
-      service: serviceName,
-      env: process.env.NODE_ENV || 'development',
-      version: process.env.npm_package_version || 'unknown',
-    },
-    propsToLabels: ['tenant_id', 'tenant_slug', 'tenant_id_short', 'tenant_slug_short'],
-    logFormat: '[{tenant_slug_short}] {msg}',
-  } as LokiOptions
-  ));
+  logStreams.push({
+    level: LOG_LEVEL as pino.Level, stream: pinoLoki({
+      batching: true,
+      interval: 5,
+      host: lokiHost,
+      basicAuth: {
+        username: lokiUsername,
+        password: lokiPassword,
+      },
+      structuredMetaKey: 'meta',
+      convertArrays: true,
+      labels: {
+        service: serviceName,
+        env: process.env.NODE_ENV || 'development',
+        version: process.env.npm_package_version || 'unknown',
+      },
+      propsToLabels: ['tenant_id', 'tenant_slug', 'tenant_id_short', 'tenant_slug_short'],
+      logFormat: '[{tenant_slug_short}] {msg}',
+    } as LokiOptions
+    )
+  });
 } else {
   console.log(
     'LOKI LOGS NOT CONFIGURED PROPERLY, Need GRAFANA_LOKI_HOST, GRAFANA_LOKI_USERNAME, GRAFANA_LOKI_PASSWORD environment variables'
