@@ -4,7 +4,7 @@ import { LineService } from '../services/line/line.service';
 import { LineMessageHandler } from '../services/line/line.handler';
 import { ILineConfig } from '../interfaces/line.interface';
 import { checkAvailabilityIntention } from '../intentions';
-import { AvailabilityService } from '../services/availability/availability.service';
+import { AvailabilityService } from '../services/availability';
 import OpenAI from 'openai';
 
 // LINE client configuration
