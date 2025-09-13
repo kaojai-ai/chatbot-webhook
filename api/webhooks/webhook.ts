@@ -23,12 +23,11 @@ export const createWebhook = (port: number = 3000): Application => {
   const lineMessageHandler = new LineMessageHandler();
   const lineService = new LineService(lineConfig, lineMessageHandler);
 
-  app.use(line.middleware(lineConfig));
-
-  // Health check endpoint
   app.get('/health', (_req: Request, res: Response) => {
     res.status(200).json({ status: 'ok', service: 'webhook' });
   });
+
+  app.use(line.middleware(lineConfig));
 
   // LINE Webhook endpoint
   app.post('/webhook', async (req: Request, res: Response) => {
