@@ -1,5 +1,6 @@
 import { messagingApi, middleware, WebhookEvent, Message, MessageEvent, FollowEvent, UnfollowEvent, PostbackEvent } from '@line/bot-sdk';
 import { ILineConfig, ILineMessageHandler, ILineService } from '../../interfaces/line.interface';
+import logger from '../../../shared/logger';
 
 type LineMessage = Exclude<Message, { type: 'flex' }>;
 

@@ -1,37 +1,11 @@
 import { ILineMessageHandler } from '../../interfaces/line.interface';
 import * as line from '@line/bot-sdk';
-import fetch from 'node-fetch';
 import logger from '../../../shared/logger';
 
 export class LineMessageHandler implements ILineMessageHandler {
   async handleMessage(event: line.MessageEvent): Promise<void> {
     if (event.message.type !== 'text') {
       return;
-    }
-
-    const forwardUrl = process.env.FORWARD_URL;
-    if (!forwardUrl) {
-      logger.error('FORWARD_URL is not set in environment variables');
-      return;
-    }
-
-    try {
-      await fetch(forwardUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          event: 'message',
-          source: 'webhook1',
-          message: event.message,
-          userId: event.source.userId,
-          timestamp: event.timestamp,
-        }),
-      });
-    } catch (error) {
-      logger.error(error, 'Error forwarding message: %s', String(error));
-      throw error;
     }
   }
 
