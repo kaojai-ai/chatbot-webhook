@@ -1,6 +1,7 @@
 import { ILineMessageHandler } from '../../interfaces/line.interface';
 import * as line from '@line/bot-sdk';
 import fetch from 'node-fetch';
+import logger from '../../../shared/logger';
 
 export class LineMessageHandler implements ILineMessageHandler {
   async handleMessage(event: line.MessageEvent): Promise<void> {
@@ -10,7 +11,7 @@ export class LineMessageHandler implements ILineMessageHandler {
 
     const forwardUrl = process.env.FORWARD_URL;
     if (!forwardUrl) {
-      console.error('FORWARD_URL is not set in environment variables');
+      logger.error('FORWARD_URL is not set in environment variables');
       return;
     }
 
@@ -29,28 +30,28 @@ export class LineMessageHandler implements ILineMessageHandler {
         }),
       });
     } catch (error) {
-      console.error('Error forwarding message:', error);
+      logger.error(error, 'Error forwarding message: %s', String(error));
       throw error;
     }
   }
 
   async handleFollow(event: line.FollowEvent): Promise<void> {
-    console.log('Received follow event:', event);
+    logger.info('Received follow event: %s', event);
     // Handle follow event if needed
   }
 
   async handleUnfollow(event: line.UnfollowEvent): Promise<void> {
-    console.log('Received unfollow event:', event);
+    logger.info('Received unfollow event: %s', event);
     // Handle unfollow event if needed
   }
 
   async handlePostback(event: line.PostbackEvent): Promise<void> {
-    console.log('Received postback event:', event);
+    logger.info('Received postback event: %s', event);
     // Handle postback event if needed
   }
 
   async handleError(error: Error): Promise<void> {
-    console.error('Error in LINE message handler:', error);
+    logger.error(error, 'Error in LINE message handler: %s', String(error));
     // Additional error handling logic can be added here
   }
 }

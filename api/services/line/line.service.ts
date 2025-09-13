@@ -50,7 +50,7 @@ export class LineService implements ILineService {
       case 'postback':
         return this.handler.handlePostback(event as PostbackEvent);
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        logger.info(`Unhandled event type: ${event.type}`);
     }
   }
 }
