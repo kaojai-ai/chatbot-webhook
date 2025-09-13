@@ -1,18 +1,6 @@
 import supabaseClient from '../../../shared/providers/supabase';
 import logger from '../../../shared/logger';
 
-interface OperatingHour {
-  day_of_week: number;
-  open_time: string;
-  close_time: string;
-}
-
-interface Closure {
-  start_time: string;
-  end_time: string;
-  title?: string;
-}
-
 export class OperatingHoursService {
   async getOperatingHoursMessage(): Promise<string> {
     const tenantId = process.env.BOOKING_TENANT_ID;
@@ -22,8 +10,8 @@ export class OperatingHoursService {
 
     const { data: operatingHours, error: opErr } = await supabaseClient
       .schema('booking')
-      .from('tenant_operating_hour')
-      .select('day_of_week, open_time, close_time')
+      .from('tenant_operating_hours')
+      .select('*')
       .eq('tenant_id', tenantId);
 
     if (opErr) {
@@ -34,13 +22,15 @@ export class OperatingHoursService {
     const next30 = new Date();
     next30.setDate(now.getDate() + 30);
 
+    // Postgres range literal: lower-inclusive, upper-exclusive
+    const windowRange = `[${now.toISOString()},${next30.toISOString()})`;
+
     const { data: closures, error: clErr } = await supabaseClient
       .schema('booking')
       .from('closures')
-      .select('start_time, end_time, title')
+      .select('*')
       .eq('tenant_id', tenantId)
-      .gte('start_time', now.toISOString())
-      .lte('start_time', next30.toISOString());
+      .filter('closed_during', 'ov', windowRange); // overlaps
 
     if (clErr) {
       logger.error(clErr, 'Error fetching closures: %s', String(clErr));
@@ -49,16 +39,27 @@ export class OperatingHoursService {
     const dayNames = ['วันอาทิตย์', 'วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัสบดี', 'วันศุกร์', 'วันเสาร์'];
 
     const lines = (operatingHours || [])
-      .map((oh: OperatingHour) => `${dayNames[oh.day_of_week]}: ${oh.open_time} - ${oh.close_time}`)
+      .map((oh) => `${dayNames[oh.weekday]}: ${oh.open_time} - ${oh.close_time}`)
       .join('\n');
 
+    // TODO load from db
+    const tenantTZ = process.env.BOOKING_TENANT_TIMEZONE || 'Asia/Bangkok';
+
     let closureLines = '';
+
     if (closures && closures.length > 0) {
       closureLines = closures
-        .map((c: Closure) => {
-          const start = new Date(c.start_time).toLocaleDateString('th-TH');
-          const end = new Date(c.end_time).toLocaleDateString('th-TH');
-          return `${start}${start !== end ? ` ถึง ${end}` : ''}${c.title ? ` (${c.title})` : ''}`;
+        .map((c) => {
+          const { start, end } = parsePgTstzRange(c.closed_during as string);
+
+          const startStr = start ? fmtInTZ(start, tenantTZ) : 'ไม่ระบุเริ่มต้น';
+          const endStr = end ? fmtInTZ(end, tenantTZ) : 'ไม่ระบุสิ้นสุด';
+
+          const same = start && end ? sameMinute(start, end) : false;
+          const rangePart = same ? `${startStr}` : `${startStr} ถึง ${endStr}`;
+          const titlePart = c.reason ? ` (${c.reason})` : '';
+
+          return `${rangePart}${titlePart}`;
         })
         .join('\n');
     } else {
