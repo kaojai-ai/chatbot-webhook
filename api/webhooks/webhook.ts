@@ -5,6 +5,7 @@ import { LineMessageHandler } from '../services/line/line.handler';
 import { ILineConfig } from '../interfaces/line.interface';
 import { checkAvailabilityIntention } from '../intentions';
 import { AvailabilityService } from '../services/availability';
+import { OperatingHoursService } from '../services/operating-hours';
 import OpenAI from 'openai';
 import logger from '../../shared/logger';
 
@@ -70,11 +71,17 @@ export const createWebhook = (port: number = 3000): Application => {
               // Here you would typically call your availability service
               // For example: await availabilityService.checkAvailability(intention.details);
             } else if (intention.intent === 'operating_hour') {
-              // Return operating hours (Thai)
-              await lineService.replyMessage(event.replyToken, [{
-                type: 'text',
-                text: '⏰ เวลาให้บริการ: ทุกวัน 9:00–21:00 น.\nหากต้องการจองหรือตรวจสอบวันว่าง พิมพ์วันที่/เดือนมาได้เลยนะครับ/ค่ะ'
-              }]);
+              try {
+                const operatingHoursService = new OperatingHoursService();
+                const message = await operatingHoursService.getOperatingHoursMessage();
+                await lineService.replyMessage(event.replyToken, [{ type: 'text', text: message }]);
+              } catch (error) {
+                logger.error(error, 'Error fetching operating hours: %s', String(error));
+                await lineService.replyMessage(event.replyToken, [{
+                  type: 'text',
+                  text: 'ขออภัย ไม่สามารถดึงข้อมูลเวลาเปิดทำการได้ในขณะนี้'
+                }]);
+              }
             } else if (intention.intent === 'joke') {
               // Get a one-line Thai joke via OpenAI
               try {
