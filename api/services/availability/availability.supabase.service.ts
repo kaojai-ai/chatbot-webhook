@@ -102,14 +102,14 @@ export class SupabaseAvailabilityService {
         const dateToCourtVacantSlots = new Map<string, Map<string, Array<{ start: string; end: string }>>>();
 
         for (const r of resources ?? []) {
-            const { data: slots, error } = await supabaseClient.rpc(
-                'booking.get_free_slots',
-                {
-                    tenant_id: tenantId,
-                    resource_id: r.id,
-                    t0: this.toSupabaseTs(timeStart, timeZone),
-                    t1: this.toSupabaseTs(timeEnd, timeZone, true),
-                    slot_mins: r.slot_granularity_minutes,
+            const { data: slots, error } = await supabaseClient
+            .schema('booking')
+            .rpc('get_free_slots', {
+                    p_tenant_id: tenantId,
+                    p_resource_id: r.id,
+                    p_t0: this.toSupabaseTs(timeStart, timeZone),
+                    p_t1: this.toSupabaseTs(timeEnd, timeZone, true),
+                    p_slot_mins: r.slot_granularity_minutes,
                 },
             );
 
