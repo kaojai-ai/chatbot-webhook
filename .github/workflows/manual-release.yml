@@ -1,0 +1,108 @@
+name: Manual Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure Git user
+        run: git config user.name "${{ github.actor }}"
+      - name: Configure Git email
+        run: git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Get previous tag
+        id: prev
+        run: |
+          echo "tag=$(git describe --tags --abbrev=0 2>/dev/null)" >> "$GITHUB_OUTPUT"
+
+      - name: Get commit logs
+        id: commits
+        run: |
+          if [ -z "${{ steps.prev.outputs.tag }}" ]; then
+            log=$(git log --pretty=format:'%s')
+          else
+            log=$(git log --pretty=format:'%s' ${{ steps.prev.outputs.tag }}..HEAD)
+          fi
+          echo "log<<EOF" >> $GITHUB_OUTPUT
+          echo "$log" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Verify OpenAI API Key
+        id: verify_key
+        run: |
+          if [ -z "${{ secrets.OPENAI_API_KEY }}" ]; then
+            echo "::error::OPENAI_API_KEY secret is not set"
+            exit 1
+          fi
+
+      - name: Generate changelog with AI
+        id: ai
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          COMMITS_LOG: ${{ steps.commits.outputs.log }}
+        run: ./.github/generate-changelog-with-ai.sh
+
+      - name: Bump version
+        id: version
+        run: |
+          new_version=$(npm version patch --no-git-tag-version | sed 's/^v//')
+          echo "version=$new_version" >> $GITHUB_OUTPUT
+
+      - name: Linkify PR references
+        id: linkify
+        env:
+          SUMMARY: ${{ steps.ai.outputs.summary }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          linked=$(echo "$SUMMARY" | sed -E "s|#([0-9]+)|[\#\1](https://github.com/${GITHUB_REPOSITORY}/pull/\1)|g")
+          echo "summary<<EOF" >> $GITHUB_OUTPUT
+          echo "$linked" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Prepare changelog entry
+        id: entry
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          SUMMARY: ${{ steps.linkify.outputs.summary }}
+        run: |
+          release_date=$(date +%F)
+          echo "entry<<EOF" >> $GITHUB_OUTPUT
+          echo -e "## v${VERSION} (${release_date})\n\n${SUMMARY}\n" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+
+      - name: Update CHANGELOG and commit changes
+        env:
+          ENTRY: ${{ steps.entry.outputs.entry }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: ./.github/update-changelog-and-commit.sh
+      - name: Push changes and tags
+        run: git push origin HEAD --tags
+
+      - name: Merge main into production branch
+        run: |
+          git fetch origin main
+          if git ls-remote --exit-code --heads origin production; then
+            git checkout production
+          else
+            git checkout -b production origin/main
+            git push origin production
+          fi
+          git merge origin/main
+          git push origin production
+
+      - run: gh release create v${{ steps.version.outputs.version }} --notes "${{ steps.entry.outputs.entry }}"
+        env:
+          GH_TOKEN: ${{ github.token }}
