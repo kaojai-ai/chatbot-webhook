@@ -1,6 +1,6 @@
 import supabaseClient from "../../../shared/providers/supabase";
 
-const CHECKSLIP_LINE_NOTIFY_CHANNEL = 'checkslip_line_notify';
+const CHECKSLIP_LINE_NOTIFY_CHANNEL = 'line_notify';
 
 type CheckSlipLineNotifyConfig = {
     userId: string[];

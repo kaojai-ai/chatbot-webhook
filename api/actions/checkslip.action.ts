@@ -75,7 +75,7 @@ export const registerCheckSlipNotify = async (
 
     if (tenantIds.length === 0) {
       logger.info({ lineUserId }, 'LINE user has no tenant binding, prompting for connection');
-      await promptTenantLinking(lineService, messageEvent.replyToken, lineUserId);
+      await promptTenantLinking(lineService, messageEvent.replyToken, lineUserId, extractGroupId(messageEvent.source));
       return;
     }
 

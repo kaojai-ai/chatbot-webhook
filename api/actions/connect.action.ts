@@ -3,17 +3,17 @@ import { LineService } from '../services/line/line.service';
 
 const TENANT_LINK_BASE_URL = 'https://admin.kaojai.ai/profile/line_connect';
 
-const createTenantLinkingConfirmMessage = (lineUserId: string): line.TemplateMessage => ({
+const createTenantLinkingConfirmMessage = (lineUserId: string, groupId?: string): line.TemplateMessage => ({
   type: 'template',
   altText: 'ต้องการผูกร้านค้ากับ LINE นี้หรือไม่?',
   template: {
     type: 'confirm',
-    text: 'LINE นี้ ยังไม่เคยผูกกับร้านในระบบ KaoJai.ai\nต้องการผูกกับร้านค้าหรือไม่?',
+    text: 'คุณยังไม่เคยผูก LINE กับ KaoJai.ai\nต้องการผูกเลยหรือไม่?',
     actions: [
       {
         type: 'uri',
         label: 'ต้องการ',
-        uri: `${TENANT_LINK_BASE_URL}?userId=${encodeURIComponent(lineUserId)}`,
+        uri: `${TENANT_LINK_BASE_URL}?userId=${encodeURIComponent(lineUserId)}${groupId ? `&groupId=${encodeURIComponent(groupId)}` : ''}`,
       },
       {
         type: 'message',
@@ -28,8 +28,9 @@ export const promptTenantLinking = async (
   lineService: LineService,
   replyToken: string,
   lineUserId: string,
+  groupId?: string,
 ): Promise<void> => {
-  const confirmMessage = createTenantLinkingConfirmMessage(lineUserId);
+  const confirmMessage = createTenantLinkingConfirmMessage(lineUserId, groupId);
 
   await lineService.replyMessage(replyToken, [confirmMessage]);
 };
