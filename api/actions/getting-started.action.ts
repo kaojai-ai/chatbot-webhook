@@ -17,11 +17,16 @@ const gettingStartedCarousel: line.TemplateMessage = {
             label: 'ลงทะเบียน',
             text: 'ลงทะเบียนรับแจ้งเตือน CheckSlip',
           },
+          {
+            type: 'message',
+            label: 'ยกเลิกแจ้งเตือน',
+            text: 'ยกเลิกรับแจ้งเตือน CheckSlip',
+          }
         ],
       },
       {
         title: 'ติดต่อ Support',
-        thumbnailImageUrl: 'https://kaojai.ai/images/blog/support.png',
+        thumbnailImageUrl: 'https://kaojai.ai/images/support.png',
         text: 'สอบถามเรื่องอื่นๆ กับทีมซัพพอร์ตของเรา',
         actions: [
           {
@@ -29,6 +34,11 @@ const gettingStartedCarousel: line.TemplateMessage = {
             label: 'สอบถามเรื่องอื่นๆ',
             text: 'สอบถามเรื่องอื่นๆ',
           },
+          {
+            type: 'message',
+            label: 'ติดต่อทางโทรศัพท์',
+            text: 'ติดต่อทางโทรศัพท์',
+          }
         ],
       },
     ],
