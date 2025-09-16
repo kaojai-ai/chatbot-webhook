@@ -43,6 +43,45 @@ export const createWebhook = (port: number = 3000): Application => {
             logger.info({ type: event.type, message: event.message.text }, 'Received webhook user message %s', event.message.text);
             // Check user intention
             const messageText = event.message.text;
+            const normalizedText = messageText.trim().toLowerCase();
+            const isMentioningSelf = event.message.mention?.mentionees?.some((mention) => mention.isSelf) ?? false;
+
+            if (isMentioningSelf || normalizedText === 'kj') {
+              const carouselMessage: line.TemplateMessage = {
+                type: 'template',
+                altText: 'เมนูช่วยเหลือน้องเข้าใจ',
+                template: {
+                  type: 'carousel',
+                  columns: [
+                    {
+                      title: 'รับแจ้งเตือน CheckSlip',
+                      text: 'ลงทะเบียนรับการแจ้งเตือนปัญหา CheckSlip ผ่าน LINE',
+                      actions: [
+                        {
+                          type: 'message',
+                          label: 'ลงทะเบียน',
+                          text: 'ลงทะเบียนรับแจ้งเตือน CheckSlip',
+                        },
+                      ],
+                    },
+                    {
+                      title: 'ติดต่อ Support',
+                      text: 'สอบถามเรื่องอื่นๆ กับทีมซัพพอร์ตของเรา',
+                      actions: [
+                        {
+                          type: 'message',
+                          label: 'สอบถามเรื่องอื่นๆ',
+                          text: 'สอบถามเรื่องอื่นๆ',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              };
+
+              await lineService.replyMessage(event.replyToken, [carouselMessage]);
+              continue;
+            }
             const intention = await checkAvailabilityIntention(messageText);
 
             if (intention.intent === 'availability') {
