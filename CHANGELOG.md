@@ -1,6 +1,11 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## v1.0.3 (2025-09-16)
+
+- Update types and enums
+- Update schema
+
 ## v1.0.2 (2025-09-16)
 
 - Add badge
