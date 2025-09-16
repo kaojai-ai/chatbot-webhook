@@ -1,24 +1,7 @@
 import OpenAI from 'openai';
 import supabaseClient from '../../../shared/providers/supabase';
 import logger from '../../../shared/logger';
-
-interface AvailableCourt {
-  date: string;
-  availableCourts: Array<{
-    courtName: string;
-    availableSlots: Array<{
-      start: string;
-      end: string;
-    }>;
-  }>;
-}
-
-type EstAvailabilityDate = {
-    year?: number,
-    month?: number,
-    date?: number,
-    language?: string
-};
+import type { AvailabilityByDate, AvailabilityOverview, EstAvailabilityDate } from './types';
 
 export class SupabaseAvailabilityService {
     private openai: OpenAI;
@@ -179,8 +162,8 @@ export class SupabaseAvailabilityService {
     private transformAvailabilityData(
         dateToCourtVacantSlots: Map<string, Map<string, Array<{ start: string; end: string }>>>,
         estimateDate: EstAvailabilityDate,
-    ): AvailableCourt[] {
-        const result: AvailableCourt[] = [];
+    ): AvailabilityByDate[] {
+        const result: AvailabilityByDate[] = [];
 
         const sortedDates = Array.from(dateToCourtVacantSlots.entries()).sort(
             ([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime(),
@@ -219,40 +202,66 @@ export class SupabaseAvailabilityService {
         return result;
     }
 
-    async getFormattedAvailability(estimateDate: EstAvailabilityDate, language: string = 'Thai'): Promise<string> {
+    async getAvailabilityOverview(
+        estimateDate: EstAvailabilityDate,
+        language: string = 'Thai',
+    ): Promise<AvailabilityOverview> {
+        logger.info({ ...estimateDate }, '[Database] Formatting availability response');
+
+        if (this.isPastDate(estimateDate)) {
+            return {
+                summary: 'The requested date is already in the past.',
+                availabilityByDate: [],
+            };
+        }
+
+        const rangeDate = this.getDates(estimateDate);
+
         try {
-            logger.info({ ...estimateDate }, '[Database] Formatting availability response')
-            if (this.isPastDate(estimateDate)) {
-                return 'The requested date is already in the past.';
-            }
-
-            const rangeDate = this.getDates(estimateDate);
-
             const availability = await this.checkAvailability(rangeDate);
             const formattedData = this.transformAvailabilityData(availability, estimateDate);
 
-            const completion = await this.openai.chat.completions.create({
-                model: 'gpt-5-mini',
-                messages: [
-                    {
-                        role: 'system',
-                        content: `You are a helpful assistant man that formats ski/snowboard slope availability information.
-                     Respond with a very short, clear, friendly message, with emoji in ${language} that summarizes the availability details. Start by telling about the range user requested date in ${language}. If no availability, encourage user to input some date`
-                    },
-                    {
-                        role: 'user',
-                        content: `These are the closest available slots to the requested date, please provide a summary in ${language}.
+            let summary = 'Availability information is not available.';
+
+            try {
+                const completion = await this.openai.chat.completions.create({
+                    model: 'gpt-5-mini',
+                    messages: [
+                        {
+                            role: 'system',
+                            content: `You are a helpful assistant man that formats ski/snowboard slope availability information. 
+                     Respond with a very short, clear, friendly message, with emoji in ${language} that summarizes the availability details. Start by telling about the range user requested date in ${language}. If no availability, encourage user to input some date`,
+                        },
+                        {
+                            role: 'user',
+                            content: `These are the closest available slots to the requested date, please provide a summary in ${language}.
 Requested date context: ${JSON.stringify(rangeDate)}
 Availability (closest to the requested date):
-${JSON.stringify(formattedData, null, 2)}`
-                    }
-                ],
-            });
+${JSON.stringify(formattedData, null, 2)}`,
+                        },
+                    ],
+                });
 
-            return completion.choices[0]?.message?.content || 'Availability information is not available.';
+                summary = completion.choices[0]?.message?.content || summary;
+            } catch (error) {
+                logger.error(error, 'Error generating availability summary: %s', String(error));
+            }
+
+            return {
+                summary,
+                availabilityByDate: formattedData,
+            };
         } catch (error) {
-            logger.error(error, 'Error getting formatted availability: %s', String(error));
-            return 'Sorry, we encountered an error while checking availability. Please try again later.';
+            logger.error(error, 'Error getting availability overview: %s', String(error));
+            return {
+                summary: 'Sorry, we encountered an error while checking availability. Please try again later.',
+                availabilityByDate: [],
+            };
         }
+    }
+
+    async getFormattedAvailability(estimateDate: EstAvailabilityDate, language: string = 'Thai'): Promise<string> {
+        const overview = await this.getAvailabilityOverview(estimateDate, language);
+        return overview.summary;
     }
 }
