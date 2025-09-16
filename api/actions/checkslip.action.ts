@@ -1,47 +1,14 @@
 import * as line from '@line/bot-sdk';
-import supabaseClient from '../../shared/providers/supabase';
 import logger from '../../shared/logger';
 import { LineService } from '../services/line/line.service';
 import { promptTenantLinking } from './connect.action';
-
-const CHECKSLIP_LINE_NOTIFY_CHANNEL = 'checkslip_line_notify';
-
-type CheckSlipLineNotifyConfig = {
-  userId: string[];
-  groupId: string[];
-};
+import { extractGroupId, extractUserId, getLineUserId } from '../lib/lineHeper';
+import { fetchTenantChannelConfig, upsertTenantChannelConfig } from '../providers/db/checkslip';
+import { fetchTenantIdsByLineUserId } from '../providers/db';
 
 type RegistrationTarget =
   | { type: 'user'; id: string }
   | { type: 'group'; id: string };
-
-const extractGroupId = (source: line.EventSource): string | undefined => {
-  const groupId = (source as { groupId?: unknown }).groupId;
-
-  if (typeof groupId === 'string' && groupId.length > 0) {
-    return groupId;
-  }
-
-  return undefined;
-};
-
-const extractUserId = (source: line.EventSource): string | undefined => {
-  const userId = (source as { userId?: unknown }).userId;
-
-  if (typeof userId === 'string' && userId.length > 0) {
-    return userId;
-  }
-
-  return undefined;
-};
-
-const ensureStringArray = (value: unknown): string[] => {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value.filter((item): item is string => typeof item === 'string');
-};
 
 const extractRegistrationTarget = (
   messageEvent: line.MessageEvent,
@@ -60,69 +27,6 @@ const extractRegistrationTarget = (
   }
 
   return undefined;
-};
-
-const getLineUserId = (messageEvent: line.MessageEvent): string | undefined =>
-  extractUserId(messageEvent.source);
-
-const isNonEmptyString = (value: unknown): value is string =>
-  typeof value === 'string' && value.length > 0;
-
-const fetchTenantIdsByLineUserId = async (lineUserId: string): Promise<string[]> => {
-  const { data, error } = await supabaseClient.rpc('get_tenant_by_line_uid', { p_line_user_id: lineUserId },
-  );
-
-  if (error) {
-    throw error;
-  }
-
-  const tenantIds = Array.isArray(data) ? data : [];
-
-  return [...new Set(tenantIds.filter(isNonEmptyString))];
-};
-
-const upsertTenantChannelConfig = async (
-  tenantId: string,
-  config: CheckSlipLineNotifyConfig,
-  status?: string | null,
-): Promise<void> => {
-  const payload = {
-    tenant_id: tenantId,
-    channel: CHECKSLIP_LINE_NOTIFY_CHANNEL,
-    config,
-    status: status ?? 'ACTIVE',
-  };
-
-  const { error: upsertError } = await supabaseClient
-    .schema('checkslip')
-    .from('tenant_channels')
-    .upsert(payload, { onConflict: 'tenant_id,channel' });
-
-  if (upsertError) {
-    throw upsertError;
-  }
-};
-
-const fetchTenantChannelConfig = async (
-  tenantId: string,
-): Promise<{ config: CheckSlipLineNotifyConfig; status?: string | null }> => {
-  const { data, error } = await supabaseClient
-    .schema('checkslip')
-    .from('tenant_channels')
-    .select('config, status')
-    .eq('tenant_id', tenantId)
-    .eq('channel', CHECKSLIP_LINE_NOTIFY_CHANNEL)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-
-  if (!data) {
-    return { config: { userId: [], groupId: [] }, status: undefined };
-  }
-
-  return { config: data.config as CheckSlipLineNotifyConfig, status: data.status };
 };
 
 const replyWithMessage = async (
