@@ -1,0 +1,23 @@
+[
+    {
+        "type": "message",
+        "message": {
+            "type": "text",
+            "id": "579140725342994488",
+            "quoteToken": "lAhsbg0qzSKKPBEiV7EGcmCni1WK_VF8Gd5cAG_QETUDRFfIcrViEyW3RadcQN2mnFRIyNKirpgeG6vXufMhfKGoQ4g8idi3EZjQqPITVEf96iDdmag4ss2rA0nvpFDewWfI4rWDDUbeE7pr-1oQNA",
+            "text": "normal message"
+        },
+        "webhookEventId": "01K598A4DWWYFFRCSYEX38MN7S",
+        "deliveryContext": {
+            "isRedelivery": false
+        },
+        "timestamp": 1758026076257,
+        "source": {
+            "type": "group",
+            "groupId": "C4dd2f2ddd970d7944b3d0d1374ca285d",
+            "userId": "U9eda9b9cfd1220ec4dec0e6b453bc845"
+        },
+        "replyToken": "4dea10c7cbd84f808d529f59e3325e95",
+        "mode": "active"
+    }
+]

@@ -1,0 +1,34 @@
+[
+    {
+        "type": "message",
+        "message": {
+            "type": "text",
+            "id": "579140611778281542",
+            "quoteToken": "XTCODUzZ6_PcqK3tSyngopka9KzK4pNN3W7-MHELnLpBVkgTECqSJlWiJ7EZobzsfeGRwgcQzePUTnsQzWWUN4C3_gb_bcz6WQQDMEfPXiyxCt--uyG2m31FNwHNjRshHUk2ztOTIQjzkAKhI-2yWg",
+            "text": "@[DEV] KaoJai.ai ",
+            "mention": {
+                "mentionees": [
+                    {
+                        "index": 0,
+                        "length": 16,
+                        "userId": "U395e5d738e108bdb61d7bd8c9cc4963b",
+                        "type": "user",
+                        "isSelf": true
+                    }
+                ]
+            }
+        },
+        "webhookEventId": "01K598822E6CDADZ9V0NY8G2N1",
+        "deliveryContext": {
+            "isRedelivery": false
+        },
+        "timestamp": 1758026008411,
+        "source": {
+            "type": "group",
+            "groupId": "C4dd2f2ddd970d7944b3d0d1374ca285d",
+            "userId": "U9eda9b9cfd1220ec4dec0e6b453bc845"
+        },
+        "replyToken": "ba9b88301bfb45edba9a4e5a297b3853",
+        "mode": "active"
+    }
+]
