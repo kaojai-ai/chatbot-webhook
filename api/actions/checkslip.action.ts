@@ -3,7 +3,7 @@ import logger from '../../shared/logger';
 import { LineService } from '../services/line/line.service';
 import { promptTenantLinking } from './connect.action';
 import { extractGroupId, extractUserId, getLineUserId } from '../lib/lineHeper';
-import { fetchTenantChannelConfig, upsertTenantChannelConfig } from '../providers/db/checkslip';
+import { CHECKSLIP_LINE_NOTIFY_CHANNEL, CHECKSLIP_LINE_WEBHOOK_CHANNEL, fetchTenantChannelConfig, upsertTenantChannelConfig } from '../providers/db/checkslip';
 import { fetchTenantIdsByLineUserId } from '../providers/db';
 
 type RegistrationTarget =
@@ -79,7 +79,7 @@ export const registerCheckSlipNotify = async (
       return;
     }
 
-    for (const tenantId of tenantIds) {
+    await Promise.all(tenantIds.map(async (tenantId) => {
       const { config, status } = await fetchTenantChannelConfig(tenantId);
 
       if (target.type === 'user' && !config.userId.includes(target.id)) {
@@ -90,8 +90,11 @@ export const registerCheckSlipNotify = async (
         config.groupId.push(target.id);
       }
 
-      await upsertTenantChannelConfig(tenantId, config, status);
-    }
+      return Promise.all([
+        upsertTenantChannelConfig(tenantId, CHECKSLIP_LINE_NOTIFY_CHANNEL, config, status),
+        upsertTenantChannelConfig(tenantId, CHECKSLIP_LINE_WEBHOOK_CHANNEL, config, status),
+      ]);
+    }));
 
     await replyWithMessage(
       lineService,
@@ -149,7 +152,7 @@ export const unregisterCheckSlipNotify = async (
       return;
     }
 
-    for (const tenantId of tenantIds) {
+    await Promise.all(tenantIds.map(async (tenantId) => {
       const { config, status } = await fetchTenantChannelConfig(tenantId);
 
       if (target.type === 'user') {
@@ -160,8 +163,8 @@ export const unregisterCheckSlipNotify = async (
         config.groupId = config.groupId.filter((id) => id !== target.id);
       }
 
-      await upsertTenantChannelConfig(tenantId, config, status);
-    }
+      return await upsertTenantChannelConfig(tenantId, CHECKSLIP_LINE_NOTIFY_CHANNEL, config, status);
+    }));
 
     await replyWithMessage(
       lineService,

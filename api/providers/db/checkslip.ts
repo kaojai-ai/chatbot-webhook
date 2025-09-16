@@ -1,7 +1,8 @@
 import supabaseClient from "../../../shared/providers/supabase";
 import { ResourceStatus } from "../../../shared/types/tenants";
 
-const CHECKSLIP_LINE_NOTIFY_CHANNEL = 'line_notify';
+export const CHECKSLIP_LINE_NOTIFY_CHANNEL = 'line_notify';
+export const CHECKSLIP_LINE_WEBHOOK_CHANNEL = 'line_webhook';
 
 type CheckSlipLineNotifyConfig = {
     userId: string[];
@@ -10,12 +11,14 @@ type CheckSlipLineNotifyConfig = {
 
 const upsertTenantChannelConfig = async (
     tenantId: string,
+    channel: string,
     config: CheckSlipLineNotifyConfig,
     status?: ResourceStatus,
 ): Promise<void> => {
+
     const payload = {
         tenant_id: tenantId,
-        channel: CHECKSLIP_LINE_NOTIFY_CHANNEL,
+        channel: channel,
         config,
         status: status,
     };
