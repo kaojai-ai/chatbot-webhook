@@ -5,7 +5,7 @@ import { LineMessageHandler } from '../services/line/line.handler';
 import { ILineConfig } from '../interfaces/line.interface';
 import { checkAvailabilityIntention } from '../intents';
 import logger from '../../shared/logger';
-import { sendGettingStartedCarousel } from '../actions';
+import { sendGettingStartedCarousel, registerCheckSlipNotify, unregisterCheckSlipNotify } from '../actions';
 import { isGettingStartedIntent } from '../intents';
 import { replyAvailabilityIntention } from '../actions/availability.action';
 
@@ -46,10 +46,21 @@ export const createWebhook = (port: number = 3000): Application => {
           }
 
           const messageText = messageEvent.message.text;
+          const normalizedMessage = messageText.trim();
           logger.info({ type: event.type, message: messageText }, 'Received webhook user message %s', messageText);
 
           if (isGettingStartedIntent(messageEvent)) {
             await sendGettingStartedCarousel(lineService, messageEvent.replyToken);
+            continue;
+          }
+
+          if (normalizedMessage === 'ลงทะเบียนรับแจ้งเตือน CheckSlip') {
+            await registerCheckSlipNotify(lineService, messageEvent);
+            continue;
+          }
+
+          if (normalizedMessage === 'ยกเลิกรับแจ้งเตือน CheckSlip') {
+            await unregisterCheckSlipNotify(lineService, messageEvent);
             continue;
           }
 
