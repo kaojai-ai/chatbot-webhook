@@ -1,6 +1,10 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## v1.0.4 (2025-09-16)
+
+- Optimize
+
 ## v1.0.3 (2025-09-16)
 
 - Update types and enums
