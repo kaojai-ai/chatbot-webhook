@@ -9,6 +9,7 @@ const gettingStartedCarousel: line.TemplateMessage = {
     columns: [
       {
         title: 'รับแจ้งเตือน CheckSlip',
+        thumbnailImageUrl: 'https://checkslip.kaojai.ai/images/blogs/danger-of-fake-slips.png',
         text: 'ลงทะเบียนรับการแจ้งเตือนปัญหา CheckSlip ผ่าน LINE',
         actions: [
           {
@@ -20,6 +21,7 @@ const gettingStartedCarousel: line.TemplateMessage = {
       },
       {
         title: 'ติดต่อ Support',
+        thumbnailImageUrl: 'https://kaojai.ai/images/blog/support.png',
         text: 'สอบถามเรื่องอื่นๆ กับทีมซัพพอร์ตของเรา',
         actions: [
           {

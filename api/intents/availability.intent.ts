@@ -1,7 +1,7 @@
-import OpenAI from 'openai';
 import logger from '../../shared/logger';
+import { openaiClient } from '../providers/openai';
 
-interface IntentionResult {
+export interface IntentionResult {
   intent: 'availability' | 'operating_hour' | 'book' | 'joke' | 'other';
   details?: {
     date?: number;
@@ -10,13 +10,9 @@ interface IntentionResult {
   };
 }
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function checkAvailabilityIntention(message: string): Promise<IntentionResult> {
   try {
-    const response = await openai.chat.completions.create({
+    const response = await openaiClient.chat.completions.create({
       model: 'gpt-5-mini', // or 'gpt-3.5-turbo' for cost efficiency
       messages: [
         {
