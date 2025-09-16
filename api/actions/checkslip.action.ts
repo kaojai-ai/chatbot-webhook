@@ -2,7 +2,7 @@ import * as line from '@line/bot-sdk';
 import supabaseClient from '../../shared/providers/supabase';
 import logger from '../../shared/logger';
 import { LineService } from '../services/line/line.service';
-import { promptTenantLinking } from './tenant.action';
+import { promptTenantLinking } from './connect.action';
 
 const CHECKSLIP_LINE_NOTIFY_CHANNEL = 'checkslip_line_notify';
 
@@ -35,7 +35,7 @@ const extractUserId = (source: line.EventSource): string | undefined => {
   return undefined;
 };
 
-const GET_TENANT_BY_LINE_USER_ID_RPC = 'getTenantIdByLineUserId';
+const GET_TENANT_BY_LINE_USER_ID_RPC = 'get_tenant_by_line_uid';
 
 const ensureStringArray = (value: unknown): string[] => {
   if (!Array.isArray(value)) {
