@@ -1,4 +1,5 @@
 import supabaseClient from "../../../shared/providers/supabase";
+import { ResourceStatus } from "../../../shared/types/tenants";
 
 const CHECKSLIP_LINE_NOTIFY_CHANNEL = 'line_notify';
 
@@ -10,13 +11,13 @@ type CheckSlipLineNotifyConfig = {
 const upsertTenantChannelConfig = async (
     tenantId: string,
     config: CheckSlipLineNotifyConfig,
-    status?: string | null,
+    status?: ResourceStatus,
 ): Promise<void> => {
     const payload = {
         tenant_id: tenantId,
         channel: CHECKSLIP_LINE_NOTIFY_CHANNEL,
         config,
-        status: status ?? 'ACTIVE',
+        status: status,
     };
 
     const { error: upsertError } = await supabaseClient
@@ -31,7 +32,7 @@ const upsertTenantChannelConfig = async (
 
 const fetchTenantChannelConfig = async (
     tenantId: string,
-): Promise<{ config: CheckSlipLineNotifyConfig; status?: string | null }> => {
+): Promise<{ config: CheckSlipLineNotifyConfig; status?: ResourceStatus }> => {
     const { data, error } = await supabaseClient
         .schema('checkslip')
         .from('tenant_channels')

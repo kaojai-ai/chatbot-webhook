@@ -27,7 +27,7 @@ export async function fetchCheckSlipTenantConfigs(): Promise<CheckSlipTenantConf
       logger.info("[DEBUG MODE] RUN ONLY TENANT: %s", process.env.ONLY_TENANT_ID);
       supabaseQuery.eq('tenant_id', process.env.ONLY_TENANT_ID);
     } else {
-      supabaseQuery.eq('status', 'ACTIVE');
+      supabaseQuery.eq('status', 'active');
     }
 
     const { data, error } = await supabaseQuery;
@@ -42,7 +42,7 @@ export async function fetchCheckSlipTenantConfigs(): Promise<CheckSlipTenantConf
       return {
         ...(row.config as unknown as Omit<CheckSlipTenantConfig, 'status' | 'tenantId'>),
         tenantId: row.tenant_id,
-        status: row.status as 'ACTIVE' | 'INACTIVE',
+        status: row.status,
       } satisfies CheckSlipTenantConfig;
     });
 

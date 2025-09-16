@@ -1,3 +1,7 @@
+import { Database } from "@kaojai-ai/db-schema";
+
+export type ResourceStatus = Database['public']['Enums']['resource_status'];
+
 export interface Tenant {
     id: string;
     name: string;
@@ -62,7 +66,7 @@ export type GmailConfig = {
 
 export interface CheckSlipTenantConfig {
     tenantId: string;
-    status: 'ACTIVE' | 'INACTIVE';
+    status: ResourceStatus;
     checkDuplicate: boolean;
     integrations: PluginConfig[];
     enabledEntrypointChannels: string[];
@@ -99,7 +103,7 @@ export interface CheckSlipTenantConfig {
 
 export interface TenantConfig {
     tenantId: string;
-    status: 'ACTIVE' | 'INACTIVE';
+    status: ResourceStatus;
     enabledModules: string[];
 }
 
