@@ -8,6 +8,8 @@ import { AvailabilityService } from '../services/availability';
 import { OperatingHoursService } from '../services/operating-hours';
 import OpenAI from 'openai';
 import logger from '../../shared/logger';
+import { sendGettingStartedCarousel } from '../actions';
+import { isGettingStartedIntent } from './intents';
 
 // LINE client configuration
 const lineConfig: ILineConfig = {
@@ -39,52 +41,27 @@ export const createWebhook = (port: number = 3000): Application => {
       try {
         // Process events only after successful forwarding
         for (const event of events) {
-          if (event.type === 'message' && event.message.type === 'text') {
-            logger.info({ type: event.type, message: event.message.text }, 'Received webhook user message %s', event.message.text);
-            // Check user intention
-            const messageText = event.message.text;
-            const normalizedText = messageText.trim().toLowerCase();
-            const isMentioningSelf = event.message.mention?.mentionees?.some((mention) => mention.isSelf) ?? false;
+          if (event.type !== 'message') {
+            continue;
+          }
 
-            if (isMentioningSelf || normalizedText === 'kj') {
-              const carouselMessage: line.TemplateMessage = {
-                type: 'template',
-                altText: 'เมนูช่วยเหลือน้องเข้าใจ',
-                template: {
-                  type: 'carousel',
-                  columns: [
-                    {
-                      title: 'รับแจ้งเตือน CheckSlip',
-                      text: 'ลงทะเบียนรับการแจ้งเตือนปัญหา CheckSlip ผ่าน LINE',
-                      actions: [
-                        {
-                          type: 'message',
-                          label: 'ลงทะเบียน',
-                          text: 'ลงทะเบียนรับแจ้งเตือน CheckSlip',
-                        },
-                      ],
-                    },
-                    {
-                      title: 'ติดต่อ Support',
-                      text: 'สอบถามเรื่องอื่นๆ กับทีมซัพพอร์ตของเรา',
-                      actions: [
-                        {
-                          type: 'message',
-                          label: 'สอบถามเรื่องอื่นๆ',
-                          text: 'สอบถามเรื่องอื่นๆ',
-                        },
-                      ],
-                    },
-                  ],
-                },
-              };
+          const messageEvent = event as line.MessageEvent;
 
-              await lineService.replyMessage(event.replyToken, [carouselMessage]);
-              continue;
-            }
-            const intention = await checkAvailabilityIntention(messageText);
+          if (messageEvent.message.type !== 'text') {
+            continue;
+          }
 
-            if (intention.intent === 'availability') {
+          const messageText = messageEvent.message.text;
+          logger.info({ type: event.type, message: messageText }, 'Received webhook user message %s', messageText);
+
+          if (isGettingStartedIntent(messageEvent)) {
+            await sendGettingStartedCarousel(lineService, messageEvent.replyToken);
+            continue;
+          }
+
+          const intention = await checkAvailabilityIntention(messageText);
+
+          if (intention.intent === 'availability') {
               // Handle availability check
               const date = intention.details?.date;
               const month = intention.details?.month;
@@ -95,13 +72,13 @@ export const createWebhook = (port: number = 3000): Application => {
                 const availability = await availabilityService.getFormattedAvailability({ year, month, date });
 
                 // Send the response
-                await lineService.replyMessage(event.replyToken, [{
+                await lineService.replyMessage(messageEvent.replyToken, [{
                   type: 'text',
                   text: availability
                 }]);
               } catch (error) {
                 logger.error(error, 'Error processing availability check: %s', String(error));
-                await lineService.replyMessage(event.replyToken, [{
+                await lineService.replyMessage(messageEvent.replyToken, [{
                   type: 'text',
                   text: 'Sorry, there was an error checking availability. Please try again later.'
                 }]);
@@ -113,10 +90,10 @@ export const createWebhook = (port: number = 3000): Application => {
               try {
                 const operatingHoursService = new OperatingHoursService();
                 const message = await operatingHoursService.getOperatingHoursMessage();
-                await lineService.replyMessage(event.replyToken, [{ type: 'text', text: message }]);
+                await lineService.replyMessage(messageEvent.replyToken, [{ type: 'text', text: message }]);
               } catch (error) {
                 logger.error(error, 'Error fetching operating hours: %s', String(error));
-                await lineService.replyMessage(event.replyToken, [{
+                await lineService.replyMessage(messageEvent.replyToken, [{
                   type: 'text',
                   text: 'ขออภัย ไม่สามารถดึงข้อมูลเวลาเปิดทำการได้ในขณะนี้'
                 }]);
@@ -132,23 +109,23 @@ export const createWebhook = (port: number = 3000): Application => {
                   ],
                 });
                 const joke = completion.choices[0]?.message?.content?.trim() || 'ขำ ๆ 😂';
-                await lineService.replyMessage(event.replyToken, [{ type: 'text', text: joke }]);
+                await lineService.replyMessage(messageEvent.replyToken, [{ type: 'text', text: joke }]);
               } catch (error) {
                 logger.error(error, 'Error fetching joke from OpenAI: %s', String(error));
-                await lineService.replyMessage(event.replyToken, [{
+                await lineService.replyMessage(messageEvent.replyToken, [{
                   type: 'text',
                   text: 'ขอโทษด้วยนะ ตอนนี้เล่าเรื่องตลกไม่ได้ ลองใหม่อีกครั้งได้เลยครับ/ค่ะ 🙏'
                 }]);
               }
             } else if (intention.intent === 'book') {
               // Booking not yet available; supplier API needed
-              await lineService.replyMessage(event.replyToken, [{
+              await lineService.replyMessage(messageEvent.replyToken, [{
                 type: 'text',
                 text: 'ตอนนี้ยังจองให้ไม่ได้เลย 😢 เขาไม่เปิด API ให้งะ 😭'
               }]);
             } else {
               // Default response for other messages
-              await lineService.replyMessage(event.replyToken, [{
+              await lineService.replyMessage(messageEvent.replyToken, [{
                 type: 'text',
                 text: '👋สวัสดีจ้า... น้องเข้าใจ 💚 เองจ้า...\nถามวันว่างได้ ให้วัน ให้เดือน มาเลย\nหรือ ถามชั่วโมงทำการก็ได้ ⏰ ให้เล่าเรื่องตลกก็ได้นะ 😂\nแวะไปบ้านน้องได้น้า 🏠 KaoJai.ai'
               }]);
