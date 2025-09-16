@@ -15,6 +15,26 @@ type RegistrationTarget =
   | { type: 'user'; id: string }
   | { type: 'group'; id: string };
 
+const extractGroupId = (source: line.EventSource): string | undefined => {
+  const groupId = (source as { groupId?: unknown }).groupId;
+
+  if (typeof groupId === 'string' && groupId.length > 0) {
+    return groupId;
+  }
+
+  return undefined;
+};
+
+const extractUserId = (source: line.EventSource): string | undefined => {
+  const userId = (source as { userId?: unknown }).userId;
+
+  if (typeof userId === 'string' && userId.length > 0) {
+    return userId;
+  }
+
+  return undefined;
+};
+
 const GET_TENANT_BY_LINE_USER_ID_RPC = 'getTenantIdByLineUserId';
 
 const ensureStringArray = (value: unknown): string[] => {
@@ -42,34 +62,23 @@ const extractRegistrationTarget = (
   messageEvent: line.MessageEvent,
 ): RegistrationTarget | undefined => {
   const source = messageEvent.source;
+  const groupId = extractGroupId(source);
 
-  switch (source.type) {
-    case 'user':
-      if (source.userId) {
-        return { type: 'user', id: source.userId };
-      }
-      break;
-    case 'group':
-      if (source.groupId) {
-        return { type: 'group', id: source.groupId };
-      }
-      break;
-    default:
-      break;
+  if (groupId) {
+    return { type: 'group', id: groupId };
+  }
+
+  const userId = extractUserId(source);
+
+  if (userId) {
+    return { type: 'user', id: userId };
   }
 
   return undefined;
 };
 
-const getLineUserId = (messageEvent: line.MessageEvent): string | undefined => {
-  const { source } = messageEvent;
-
-  if ('userId' in source && typeof source.userId === 'string' && source.userId.length > 0) {
-    return source.userId;
-  }
-
-  return undefined;
-};
+const getLineUserId = (messageEvent: line.MessageEvent): string | undefined =>
+  extractUserId(messageEvent.source);
 
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.length > 0;
@@ -245,7 +254,11 @@ export const unregisterCheckSlipNotify = async (
 
     if (tenantIds.length === 0) {
       logger.info({ lineUserId }, 'LINE user has no tenant binding while trying to unregister');
-      await promptTenantLinking(lineService, messageEvent.replyToken, lineUserId);
+      await replyWithMessage(
+        lineService,
+        messageEvent.replyToken,
+        'ไม่พบการลงทะเบียนแจ้งเตือน CheckSlip สำหรับ LINE นี้ค่ะ',
+      );
       return;
     }
 
