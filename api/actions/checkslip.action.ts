@@ -2,6 +2,7 @@ import * as line from '@line/bot-sdk';
 import supabaseClient from '../../shared/providers/supabase';
 import logger from '../../shared/logger';
 import { LineService } from '../services/line/line.service';
+import { promptTenantLinking } from './tenant.action';
 
 const CHECKSLIP_LINE_NOTIFY_CHANNEL = 'checkslip_line_notify';
 
@@ -14,10 +15,7 @@ type RegistrationTarget =
   | { type: 'user'; id: string }
   | { type: 'group'; id: string };
 
-const getTenantId = (): string | undefined =>
-  process.env.CHECKSLIP_NOTIFY_TENANT_ID ??
-  process.env.CHECKSLIP_TENANT_ID ??
-  process.env.ONLY_TENANT_ID;
+const GET_TENANT_BY_LINE_USER_ID_RPC = 'getTenantIdByLineUserId';
 
 const ensureStringArray = (value: unknown): string[] => {
   if (!Array.isArray(value)) {
@@ -61,6 +59,34 @@ const extractRegistrationTarget = (
   }
 
   return undefined;
+};
+
+const getLineUserId = (messageEvent: line.MessageEvent): string | undefined => {
+  const { source } = messageEvent;
+
+  if ('userId' in source && typeof source.userId === 'string' && source.userId.length > 0) {
+    return source.userId;
+  }
+
+  return undefined;
+};
+
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === 'string' && value.length > 0;
+
+const fetchTenantIdsByLineUserId = async (lineUserId: string): Promise<string[]> => {
+  const { data, error } = await supabaseClient.rpc<string[]>(
+    GET_TENANT_BY_LINE_USER_ID_RPC,
+    { p_line_user_id: lineUserId },
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  const tenantIds = Array.isArray(data) ? data : [];
+
+  return [...new Set(tenantIds.filter(isNonEmptyString))];
 };
 
 const upsertTenantChannelConfig = async (
@@ -124,18 +150,6 @@ export const registerCheckSlipNotify = async (
   lineService: LineService,
   messageEvent: line.MessageEvent,
 ): Promise<void> => {
-  const tenantId = getTenantId();
-
-  if (!tenantId) {
-    logger.error('CHECKSLIP_NOTIFY_TENANT_ID env is required to register notification');
-    await replyWithMessage(
-      lineService,
-      messageEvent.replyToken,
-      'ไม่สามารถลงทะเบียนได้ เนื่องจากระบบยังไม่พร้อม โปรดลองใหม่ภายหลังนะคะ',
-    );
-    return;
-  }
-
   const target = extractRegistrationTarget(messageEvent);
 
   if (!target) {
@@ -148,18 +162,40 @@ export const registerCheckSlipNotify = async (
     return;
   }
 
+  const lineUserId = getLineUserId(messageEvent);
+
+  if (!lineUserId) {
+    logger.warn({ source: messageEvent.source }, 'Missing LINE userId for CheckSlip registration');
+    await replyWithMessage(
+      lineService,
+      messageEvent.replyToken,
+      'ไม่สามารถลงทะเบียนได้ เนื่องจากไม่พบข้อมูลผู้ใช้งานจาก LINE กรุณาลองใหม่อีกครั้งในแชทส่วนตัวนะคะ',
+    );
+    return;
+  }
+
   try {
-    const { config, status } = await fetchTenantChannelConfig(tenantId);
+    const tenantIds = await fetchTenantIdsByLineUserId(lineUserId);
 
-    if (target.type === 'user' && !config.userId.includes(target.id)) {
-      config.userId.push(target.id);
+    if (tenantIds.length === 0) {
+      logger.info({ lineUserId }, 'LINE user has no tenant binding, prompting for connection');
+      await promptTenantLinking(lineService, messageEvent.replyToken, lineUserId);
+      return;
     }
 
-    if (target.type === 'group' && !config.groupId.includes(target.id)) {
-      config.groupId.push(target.id);
-    }
+    for (const tenantId of tenantIds) {
+      const { config, status } = await fetchTenantChannelConfig(tenantId);
 
-    await upsertTenantChannelConfig(tenantId, config, status);
+      if (target.type === 'user' && !config.userId.includes(target.id)) {
+        config.userId.push(target.id);
+      }
+
+      if (target.type === 'group' && !config.groupId.includes(target.id)) {
+        config.groupId.push(target.id);
+      }
+
+      await upsertTenantChannelConfig(tenantId, config, status);
+    }
 
     await replyWithMessage(
       lineService,
@@ -180,18 +216,6 @@ export const unregisterCheckSlipNotify = async (
   lineService: LineService,
   messageEvent: line.MessageEvent,
 ): Promise<void> => {
-  const tenantId = getTenantId();
-
-  if (!tenantId) {
-    logger.error('CHECKSLIP_NOTIFY_TENANT_ID env is required to unregister notification');
-    await replyWithMessage(
-      lineService,
-      messageEvent.replyToken,
-      'ไม่สามารถยกเลิกการแจ้งเตือนได้ เนื่องจากระบบยังไม่พร้อม โปรดลองใหม่ภายหลังนะคะ',
-    );
-    return;
-  }
-
   const target = extractRegistrationTarget(messageEvent);
 
   if (!target) {
@@ -204,18 +228,40 @@ export const unregisterCheckSlipNotify = async (
     return;
   }
 
+  const lineUserId = getLineUserId(messageEvent);
+
+  if (!lineUserId) {
+    logger.warn({ source: messageEvent.source }, 'Missing LINE userId for CheckSlip unregistration');
+    await replyWithMessage(
+      lineService,
+      messageEvent.replyToken,
+      'ไม่สามารถยกเลิกการแจ้งเตือนได้ เนื่องจากไม่พบข้อมูลผู้ใช้งานจาก LINE กรุณาลองใหม่อีกครั้งในแชทส่วนตัวนะคะ',
+    );
+    return;
+  }
+
   try {
-    const { config, status } = await fetchTenantChannelConfig(tenantId);
+    const tenantIds = await fetchTenantIdsByLineUserId(lineUserId);
 
-    if (target.type === 'user') {
-      config.userId = config.userId.filter((id) => id !== target.id);
+    if (tenantIds.length === 0) {
+      logger.info({ lineUserId }, 'LINE user has no tenant binding while trying to unregister');
+      await promptTenantLinking(lineService, messageEvent.replyToken, lineUserId);
+      return;
     }
 
-    if (target.type === 'group') {
-      config.groupId = config.groupId.filter((id) => id !== target.id);
-    }
+    for (const tenantId of tenantIds) {
+      const { config, status } = await fetchTenantChannelConfig(tenantId);
 
-    await upsertTenantChannelConfig(tenantId, config, status);
+      if (target.type === 'user') {
+        config.userId = config.userId.filter((id) => id !== target.id);
+      }
+
+      if (target.type === 'group') {
+        config.groupId = config.groupId.filter((id) => id !== target.id);
+      }
+
+      await upsertTenantChannelConfig(tenantId, config, status);
+    }
 
     await replyWithMessage(
       lineService,
