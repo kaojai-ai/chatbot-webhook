@@ -35,27 +35,12 @@ const extractUserId = (source: line.EventSource): string | undefined => {
   return undefined;
 };
 
-const GET_TENANT_BY_LINE_USER_ID_RPC = 'get_tenant_by_line_uid';
-
 const ensureStringArray = (value: unknown): string[] => {
   if (!Array.isArray(value)) {
     return [];
   }
 
   return value.filter((item): item is string => typeof item === 'string');
-};
-
-const parseConfig = (config: unknown): CheckSlipLineNotifyConfig => {
-  if (!config || typeof config !== 'object') {
-    return { userId: [], groupId: [] };
-  }
-
-  const rawConfig = config as Partial<Record<'userId' | 'groupId', unknown>>;
-
-  return {
-    userId: ensureStringArray(rawConfig.userId),
-    groupId: ensureStringArray(rawConfig.groupId),
-  } satisfies CheckSlipLineNotifyConfig;
 };
 
 const extractRegistrationTarget = (
@@ -84,9 +69,7 @@ const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.length > 0;
 
 const fetchTenantIdsByLineUserId = async (lineUserId: string): Promise<string[]> => {
-  const { data, error } = await supabaseClient.rpc<string[]>(
-    GET_TENANT_BY_LINE_USER_ID_RPC,
-    { p_line_user_id: lineUserId },
+  const { data, error } = await supabaseClient.rpc('get_tenant_by_line_uid', { p_line_user_id: lineUserId },
   );
 
   if (error) {
@@ -139,7 +122,7 @@ const fetchTenantChannelConfig = async (
     return { config: { userId: [], groupId: [] }, status: undefined };
   }
 
-  return { config: parseConfig(data.config), status: data.status };
+  return { config: data.config as CheckSlipLineNotifyConfig, status: data.status };
 };
 
 const replyWithMessage = async (
