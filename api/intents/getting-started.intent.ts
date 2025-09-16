@@ -6,7 +6,13 @@ export const isGettingStartedIntent = (event: line.MessageEvent): boolean => {
   }
 
   const normalizedText = event.message.text.trim().toLowerCase();
-  const isMentioningSelf = event.message.mention?.mentionees?.some((mention) => mention.type === 'user' && mention.userId === process.env.KAOJAI_SELF_LINE_USER_ID) ?? false;
+
+  const normalizedMentionees = event.message.mention?.mentionees?.map((m) => ({
+    ...m,
+    isSelf: Boolean((m as any).isSelf), // default false if not there
+  })) ?? []
+
+  const isMentioningSelf = normalizedMentionees.some((mention) => mention.type === 'user' && mention.isSelf) ?? false;
 
   return isMentioningSelf || normalizedText === 'kj';
 };
