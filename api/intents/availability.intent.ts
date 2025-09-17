@@ -12,7 +12,7 @@ export interface IntentionResult {
 
 export async function checkAvailabilityIntention(message: string): Promise<IntentionResult> {
   try {
-    const response = await openaiClient.chat.completions.create({
+    const response = await openaiClient.getChatCompletion({
       model: 'gpt-5-mini', // or 'gpt-3.5-turbo' for cost efficiency
       messages: [
         {

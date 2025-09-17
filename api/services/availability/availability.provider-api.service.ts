@@ -1,15 +1,56 @@
 import OpenAI from 'openai';
-import supabaseClient from '../../../shared/providers/supabase';
 import logger from '../../../shared/logger';
 import type { AvailabilityByDate, AvailabilityOverview, EstAvailabilityDate } from './types';
 
-export class SupabaseAvailabilityService {
+interface CourtMatch {
+    id: number;
+    user_id: number | null;
+    court_id: number;
+    time_start: string;
+    time_end: string;
+}
+
+interface CourtType {
+    id: number;
+    name: string;
+    name_en: string;
+    price: number;
+    // Add other fields as needed
+}
+
+interface Court {
+    id: number;
+    name: string;
+    name_en: string;
+    court_type: CourtType;
+    matches: CourtMatch[];
+    price: number;
+}
+
+interface Sport {
+    id: number;
+    name: string;
+    name_en: string;
+    // Add other sport fields as needed
+}
+
+interface ProviderSport {
+    id: number;
+    sport: Sport;
+    courts: Court[];
+}
+
+export class AvailabilityService {
     private openai: OpenAI;
+    private apiBaseUrl: string;
+    private providerId: string;
 
     constructor() {
         this.openai = new OpenAI({
             apiKey: process.env.OPENAI_API_KEY,
         });
+        this.apiBaseUrl = process.env.AVAILABILITY_API_URL || '';
+        this.providerId = process.env.PROVIDER_ID || '10202';
     }
 
     private isPastDate(estimateDate: EstAvailabilityDate): boolean {
@@ -79,100 +120,105 @@ export class SupabaseAvailabilityService {
         };
     }
 
-    private toSupabaseTs(dateStr: string, timeZone: string, endOfDay = false): string {
-        const time = endOfDay ? '23:59:59' : '00:00:00';
-        const d = new Date(`${dateStr}T${time}`);
-        const inv = new Date(d.toLocaleString('en-US', { timeZone }));
-        const diff = d.getTime() - inv.getTime();
-        return new Date(d.getTime() - diff).toISOString();
+    async checkAvailability({ timeStart, timeEnd }: { timeStart: string, timeEnd: string }): Promise<ProviderSport[]> {
+        logger.info({ timeStart, timeEnd }, `[Supplier API] Checking availability for time range: ${timeStart} - ${timeEnd}`);
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/${this.providerId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${process.env.AVAILABILITY_API_KEY}`,
+                    'x-lang': 'th'
+                },
+                body: JSON.stringify({
+                    time_start: timeStart,
+                    time_end: timeEnd
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(
+                    `API request failed with status ${response.status}: ${JSON.stringify(errorData)}`
+                );
+            }
+
+            const data: ProviderSport[] = await response.json();
+            return data;
+        } catch (error) {
+            logger.error(error, 'Error checking availability: %s', String(error));
+            throw new Error('Failed to check availability. Please try again later.');
+        }
     }
 
-    async checkAvailability({ timeStart, timeEnd }: { timeStart: string; timeEnd: string }): Promise<Map<string, Map<string, Array<{ start: string; end: string }>>>> {
-        logger.info({ timeStart, timeEnd }, '[Database] Checking availability for time range: %s - %s', timeStart, timeEnd)
-        const tenantId = process.env.BOOKING_TENANT_ID;
-        if (!tenantId) {
-            throw new Error('BOOKING_TENANT_ID env is required');
-        }
-
-        const { data: tenantCfg } = await supabaseClient
-            .from('tenant_configs')
-            .select('timezone')
-            .eq('tenant_id', tenantId)
-            .single();
-        const timeZone = tenantCfg?.timezone || 'UTC';
-
-        const { data: resources } = await supabaseClient
-            .schema('booking')
-            .from('resources')
-            .select('id, name, slot_granularity_minutes')
-            .eq('tenant_id', tenantId);
-
+    private transformAvailabilityData(availability: ProviderSport[], estimateDate: EstAvailabilityDate): AvailabilityByDate[] {
+        const result: AvailabilityByDate[] = [];
+        // Map<DateString, Map<CourtName, Array<{start: string, end: string}>>>
         const dateToCourtVacantSlots = new Map<string, Map<string, Array<{ start: string; end: string }>>>();
 
-        const { data: slots, error } = await supabaseClient
-        .schema('booking')
-        .rpc('get_free_slots', {
-                p_tenant_id: tenantId,
-                p_t0: this.toSupabaseTs(timeStart, timeZone),
-                p_t1: this.toSupabaseTs(timeEnd, timeZone, true),
-            },
-        );
+        // Helpers
+        const parseDateTime = (s: string) => new Date(s.replace(' ', 'T'));
+        const buildDateTime = (dateStr: string, timeStrHHmm: string) => new Date(`${dateStr}T${timeStrHHmm}:00`);
+        const overlaps = (aStart: Date, aEnd: Date, bStart: Date, bEnd: Date) => (aStart < bEnd && aEnd > bStart);
 
-        if (error || !slots || !resources) {
-            logger.error({ error, slots, resources }, '[Database] Error checking availability');
-            throw new Error('Error checking availability');
-        }
+        // Group matches by court and date, then compute vacant 1-hour slots between 09:00-21:00
+        availability.forEach((sport) => {
+            sport.courts.forEach((court) => {
+                // Group matches by date for this court
+                const matchesByDate = new Map<string, CourtMatch[]>();
+                court.matches.forEach((m) => {
+                    const d = m.time_start.split(' ')[0];
+                    if (!matchesByDate.has(d)) matchesByDate.set(d, []);
+                    matchesByDate.get(d)!.push(m);
+                });
 
-        (slots).forEach((s) => {
-            const dateStr = new Date(s.slot_start).toLocaleDateString('en-CA', { timeZone });
-            const start = new Date(s.slot_start).toLocaleTimeString('en-GB', {
-                timeZone,
-                hour12: false,
-                hour: '2-digit',
-                minute: '2-digit',
+                // For each date, generate hourly slots and exclude booked ones
+                matchesByDate.forEach((matches, dateStr) => {
+                    // Prepare container
+                    if (!dateToCourtVacantSlots.has(dateStr)) {
+                        dateToCourtVacantSlots.set(dateStr, new Map());
+                    }
+                    const courtMap = dateToCourtVacantSlots.get(dateStr)!;
+
+                    const vacant: Array<{ start: string; end: string }> = [];
+
+                    for (let hour = 9; hour < 21; hour++) {
+                        const hh = hour.toString().padStart(2, '0');
+                        const nextHh = (hour + 1).toString().padStart(2, '0');
+                        const slotStartStr = `${hh}:00`;
+                        const slotEndStr = `${nextHh}:00`;
+
+                        const slotStart = buildDateTime(dateStr, slotStartStr);
+                        const slotEnd = buildDateTime(dateStr, slotEndStr);
+
+                        const isBooked = matches.some((m) => {
+                            const mStart = parseDateTime(m.time_start);
+                            const mEnd = parseDateTime(m.time_end);
+                            return overlaps(mStart, mEnd, slotStart, slotEnd);
+                        });
+
+                        if (!isBooked) {
+                            vacant.push({ start: slotStartStr, end: slotEndStr });
+                        }
+                    }
+
+                    if (vacant.length > 0) {
+                        courtMap.set(court.name, vacant);
+                    }
+                });
             });
-            const end = new Date(s.slot_end).toLocaleTimeString('en-GB', {
-                timeZone,
-                hour12: false,
-                hour: '2-digit',
-                minute: '2-digit',
-            });
-
-            if (!dateToCourtVacantSlots.has(dateStr)) {
-                dateToCourtVacantSlots.set(dateStr, new Map());
-            }
-
-            const resourceName = resources.find((r) => r.id === s.resource_id)?.name;
-
-            if (!resourceName) {
-                logger.error({ s, resources }, '[Database] Resource not found');
-                return;
-            }
-
-            const courtMap = dateToCourtVacantSlots.get(dateStr)!;
-            if (!courtMap.has(resourceName)) {
-                courtMap.set(resourceName, []);
-            }
-            courtMap.get(resourceName)!.push({ start, end });
         });
 
-        return dateToCourtVacantSlots;
-    }
-
-    private transformAvailabilityData(
-        dateToCourtVacantSlots: Map<string, Map<string, Array<{ start: string; end: string }>>>,
-        estimateDate: EstAvailabilityDate,
-    ): AvailabilityByDate[] {
-        const result: AvailabilityByDate[] = [];
-
+        // Convert map to array and sort by date
         const sortedDates = Array.from(dateToCourtVacantSlots.entries()).sort(
-            ([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime(),
+            ([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime()
         );
 
+        // Find the 3 closest dates to estimateDate
         const targetDate = new Date(
             estimateDate.year ?? new Date().getFullYear(),
             (estimateDate.month ?? new Date().getMonth() + 1) - 1,
-            estimateDate.date ?? 1,
+            estimateDate.date ?? 1
         );
 
         const closestDates = sortedDates
@@ -181,24 +227,24 @@ export class SupabaseAvailabilityService {
             .slice(0, 3)
             .map((item) => item.date);
 
+        // Build the result array with only the closest dates and courts that have vacancies
         closestDates.forEach((date) => {
             const courtMap = dateToCourtVacantSlots.get(date);
             if (courtMap) {
-                const availableCourts = Array.from(courtMap.entries()).map(([courtName, slots]) => ({
-                    courtName,
-                    availableSlots: slots,
-                }));
+                const availableResources = Array.from(courtMap.entries())
+                    .map(([resourceName, slots]) => ({ resourceName, availableSlots: slots }))
+                    .filter((c) => c.availableSlots.length > 0);
 
-                if (availableCourts.length > 0) {
+                if (availableResources.length > 0) {
                     result.push({
                         date,
-                        availableCourts,
+                        availableResources,
                     });
                 }
             }
         });
 
-        logger.info('[Database] Availability result %s', result.length)
+        logger.info(`[Supplier API] Availability Found ${result.length} available courts`);
         return result;
     }
 
@@ -206,12 +252,12 @@ export class SupabaseAvailabilityService {
         estimateDate: EstAvailabilityDate,
         language: string = 'Thai',
     ): Promise<AvailabilityOverview> {
-        logger.info({ ...estimateDate }, '[Database] Formatting availability response');
+        logger.info({ ...estimateDate }, '[Supplier API] Formatting availability response');
 
         if (this.isPastDate(estimateDate)) {
             return {
                 summary: 'The requested date is already in the past.',
-                availabilityByDate: [],
+                availableDays: [],
             };
         }
 
@@ -219,7 +265,6 @@ export class SupabaseAvailabilityService {
 
         try {
             const availability = await this.checkAvailability(rangeDate);
-            const formattedData = this.transformAvailabilityData(availability, estimateDate);
 
             let summary = 'Availability information is not available.';
 
@@ -229,15 +274,14 @@ export class SupabaseAvailabilityService {
                     messages: [
                         {
                             role: 'system',
-                            content: `You are a helpful assistant man that formats ski/snowboard slope availability information. 
+                            content: `You are a helpful assistant man that formats ski/snowboard slope availability information.
                      Respond with a very short, clear, friendly message, with emoji in ${language} that summarizes the availability details. Start by telling about the range user requested date in ${language}. If no availability, encourage user to input some date`,
                         },
                         {
                             role: 'user',
                             content: `These are the closest available slots to the requested date, please provide a summary in ${language}.
 Requested date context: ${JSON.stringify(rangeDate)}
-Availability (closest to the requested date):
-${JSON.stringify(formattedData, null, 2)}`,
+Availability (closest to the requested date)`,
                         },
                     ],
                 });
@@ -249,19 +293,18 @@ ${JSON.stringify(formattedData, null, 2)}`,
 
             return {
                 summary,
-                availabilityByDate: formattedData,
+                availableDays: [],
             };
         } catch (error) {
             logger.error(error, 'Error getting availability overview: %s', String(error));
             return {
                 summary: 'Sorry, we encountered an error while checking availability. Please try again later.',
-                availabilityByDate: [],
+                availableDays: [],
             };
         }
     }
 
     async getFormattedAvailability(estimateDate: EstAvailabilityDate, language: string = 'Thai'): Promise<string> {
-        const overview = await this.getAvailabilityOverview(estimateDate, language);
-        return overview.summary;
+        throw new Error('Not implemented');
     }
 }

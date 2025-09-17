@@ -11,16 +11,26 @@ export interface AvailableSlot {
 }
 
 export interface AvailableCourtAvailability {
-  courtName: string;
+  resourceName: string;
   availableSlots: AvailableSlot[];
 }
 
 export interface AvailabilityByDate {
   date: string;
-  availableCourts: AvailableCourtAvailability[];
+  availableResources: AvailableCourtAvailability[];
 }
 
+
 export interface AvailabilityOverview {
-  summary: string;
-  availabilityByDate: AvailabilityByDate[];
+  intro?: string;
+  cta?: string;
+  availableDays: OpenAiAvailableDays[];
+  summary?: string;
+  error?: string;
+}
+
+export interface OpenAiAvailableDays {
+  date: string;
+  dateFormat: string;
+  availabilityText: string;
 }

@@ -1,8 +1,7 @@
-import { messagingApi, middleware, WebhookEvent, Message, MessageEvent, FollowEvent, UnfollowEvent, PostbackEvent } from '@line/bot-sdk';
+import { messagingApi, WebhookEvent, MessageEvent, FollowEvent, UnfollowEvent, PostbackEvent } from '@line/bot-sdk';
 import { ILineConfig, ILineMessageHandler, ILineService } from '../../interfaces/line.interface';
 import logger from '../../../shared/logger';
-
-type LineMessage = Exclude<Message, { type: 'flex' }>;
+import * as line from '@line/bot-sdk';
 
 export class LineService implements ILineService {
   private client: messagingApi.MessagingApiClient;
@@ -33,7 +32,7 @@ export class LineService implements ILineService {
     );
   }
 
-  public async replyMessage(replyToken: string, messages: LineMessage[]): Promise<void> {
+  public async replyMessage(replyToken: string, messages: line.messagingApi.Message[]): Promise<void> {
     await this.client.replyMessage({
       replyToken,
       messages,
