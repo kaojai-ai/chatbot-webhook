@@ -1,6 +1,10 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## v1.0.9 (2025-09-17)
+
+- Work in progress (WIP)
+
 ## v1.0.8 (2025-09-17)
 
 - No commit messages provided
