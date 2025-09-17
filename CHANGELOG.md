@@ -1,6 +1,14 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## v1.0.5 (2025-09-17)
+
+- Correct get free slots
+- Add availability carousel ([#6](https://github.com/kaojai-ai/chatbot-webhook/pull/6))
+- Correct get free slots
+- Update schema
+- Update schema
+
 ## v1.0.4 (2025-09-16)
 
 - Optimize
