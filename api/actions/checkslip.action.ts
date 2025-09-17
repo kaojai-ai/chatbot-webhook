@@ -82,12 +82,12 @@ export const registerCheckSlipNotify = async (
     await Promise.all(tenantIds.map(async (tenantId) => {
       const { config, status } = await fetchTenantChannelConfig(tenantId);
 
-      if (target.type === 'user' && !config.userIds.includes(target.id)) {
-        config.userIds.push(target.id);
+      if (target.type === 'user' && !config.userIds?.includes(target.id)) {
+        config.userIds?.push(target.id);
       }
 
-      if (target.type === 'group' && !config.groupIds.includes(target.id)) {
-        config.groupIds.push(target.id);
+      if (target.type === 'group' && !config.groupIds?.includes(target.id)) {
+        config.groupIds?.push(target.id);
       }
 
       return Promise.all([
@@ -156,11 +156,11 @@ export const unregisterCheckSlipNotify = async (
       const { config, status } = await fetchTenantChannelConfig(tenantId);
 
       if (target.type === 'user') {
-        config.userIds = config.userIds.filter((id) => id !== target.id);
+        config.userIds = config.userIds?.filter((id) => id !== target.id);
       }
 
       if (target.type === 'group') {
-        config.groupIds = config.groupIds.filter((id) => id !== target.id);
+        config.groupIds = config.groupIds?.filter((id) => id !== target.id);
       }
 
       return await upsertTenantChannelConfig(tenantId, CHECKSLIP_LINE_NOTIFY_CHANNEL, config, status);
