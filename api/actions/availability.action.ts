@@ -5,6 +5,88 @@ import { OperatingHoursService } from "../services/operating-hours";
 import { IntentionResult } from "../intents";
 import * as line from '@line/bot-sdk';
 import { openaiClient } from "../providers/openai";
+import type { AvailabilityByDate } from "../services/availability/types";
+
+const MAX_CAROUSEL_CARDS = 5;
+const MAX_COURTS_PER_CARD = 3;
+const MAX_SLOTS_PER_COURT = 3;
+const CAROUSEL_TEXT_MAX_LENGTH = 60;
+
+const clampText = (text: string, maxLength: number): string => (text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text);
+
+const formatDateTitle = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) {
+    return dateStr;
+  }
+  return date.toLocaleDateString('th-TH', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+};
+
+const formatDateForAction = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) {
+    return dateStr;
+  }
+  return date.toLocaleDateString('th-TH', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+};
+
+const formatAvailabilityDetails = (availableCourts: AvailabilityByDate['availableCourts']): string => {
+  const courts = availableCourts.slice(0, MAX_COURTS_PER_CARD);
+  const details = courts.map((court) => {
+    const slotTexts = court.availableSlots
+      .slice(0, MAX_SLOTS_PER_COURT)
+      .map((slot) => `${slot.start}-${slot.end}`)
+      .join(', ');
+    const suffix = court.availableSlots.length > MAX_SLOTS_PER_COURT ? '…' : '';
+    return `${court.courtName}: ${slotTexts}${suffix}`;
+  });
+
+  if (availableCourts.length > MAX_COURTS_PER_CARD) {
+    details.push('…');
+  }
+
+  const text = details.join('\n').trim();
+  return clampText(text || 'มีเวลาว่างหลายช่วงเวลาให้เลือก', CAROUSEL_TEXT_MAX_LENGTH);
+};
+
+const buildAvailabilityCarousel = (availabilityByDate: AvailabilityByDate[]): line.TemplateMessage => {
+  const columns = availabilityByDate.slice(0, MAX_CAROUSEL_CARDS).map((day) => {
+    const title = clampText(formatDateTitle(day.date), 40);
+    const text = formatAvailabilityDetails(day.availableCourts);
+    const actionDate = formatDateForAction(day.date);
+
+    return {
+      title,
+      text,
+      actions: [
+        {
+          type: 'message' as const,
+          label: 'เลือกวันที่นี้',
+          text: `สนใจจองวันที่ ${actionDate}`,
+        },
+      ],
+    };
+  });
+
+  const altTextDates = columns.map((column) => column.title).join(', ');
+
+  return {
+    type: 'template',
+    altText: clampText(`ช่วงเวลาว่าง: ${altTextDates}`, 400),
+    template: {
+      type: 'carousel',
+      columns,
+    },
+  };
+};
 
 export const replyAvailabilityIntention = async (intention: IntentionResult, lineService: LineService, messageEvent: line.MessageEvent) => {
     if (intention.intent === 'availability') {
@@ -15,13 +97,26 @@ export const replyAvailabilityIntention = async (intention: IntentionResult, lin
 
         try {
           const availabilityService = new AvailabilityService();
-          const availability = await availabilityService.getFormattedAvailability({ year, month, date });
+          const { summary, availabilityByDate } = await availabilityService.getAvailabilityOverview({ year, month, date });
 
-          // Send the response
-          await lineService.replyMessage(messageEvent.replyToken, [{
-            type: 'text',
-            text: availability
-          }]);
+          if (availabilityByDate.length > 0) {
+            const messages: line.Message[] = [];
+            if (summary) {
+              messages.push({
+                type: 'text',
+                text: summary,
+              });
+            }
+
+            messages.push(buildAvailabilityCarousel(availabilityByDate));
+
+            await lineService.replyMessage(messageEvent.replyToken, messages);
+          } else {
+            await lineService.replyMessage(messageEvent.replyToken, [{
+              type: 'text',
+              text: summary || 'Availability information is not available.',
+            }]);
+          }
         } catch (error) {
           logger.error(error, 'Error processing availability check: %s', String(error));
           await lineService.replyMessage(messageEvent.replyToken, [{
