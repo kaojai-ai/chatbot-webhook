@@ -1,6 +1,10 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## v1.0.6 (2025-09-17)
+
+- Treat userIds as an array
+
 ## v1.0.5 (2025-09-17)
 
 - Correct get free slots
