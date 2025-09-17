@@ -5,8 +5,8 @@ export const CHECKSLIP_LINE_NOTIFY_CHANNEL = 'line_notify';
 export const CHECKSLIP_LINE_WEBHOOK_CHANNEL = 'line_webhook';
 
 type CheckSlipLineNotifyConfig = {
-    userId: string[];
-    groupId: string[];
+    userIds: string[];
+    groupIds: string[];
 };
 
 const upsertTenantChannelConfig = async (
@@ -49,7 +49,7 @@ const fetchTenantChannelConfig = async (
     }
 
     if (!data) {
-        return { config: { userId: [], groupId: [] }, status: undefined };
+        return { config: { userIds: [], groupIds: [] }, status: undefined };
     }
 
     return { config: data.config as CheckSlipLineNotifyConfig, status: data.status };
