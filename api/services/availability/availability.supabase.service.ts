@@ -126,45 +126,52 @@ export class SupabaseAvailabilityService {
 
         const dateToCourtVacantSlots = new Map<string, Map<string, Array<{ start: string; end: string }>>>();
 
-        for (const r of resources ?? []) {
-            const { data: slots, error } = await supabaseClient
-            .schema('booking')
-            .rpc('get_free_slots', {
-                    p_tenant_id: tenantId,
-                    p_resource_id: r.id,
-                    p_t0: this.toSupabaseTs(timeStart, timeZone),
-                    p_t1: this.toSupabaseTs(timeEnd, timeZone, true),
-                    p_slot_mins: r.slot_granularity_minutes,
-                },
-            );
+        const { data: slots, error } = await supabaseClient
+        .schema('booking')
+        .rpc('get_free_slots', {
+                p_tenant_id: tenantId,
+                p_t0: this.toSupabaseTs(timeStart, timeZone),
+                p_t1: this.toSupabaseTs(timeEnd, timeZone, true),
+            },
+        );
 
-            if (error || !slots) continue;
-
-            (slots as { slot_start: string; slot_end: string }[]).forEach((s) => {
-                const dateStr = new Date(s.slot_start).toLocaleDateString('en-CA', { timeZone });
-                const start = new Date(s.slot_start).toLocaleTimeString('en-GB', {
-                    timeZone,
-                    hour12: false,
-                    hour: '2-digit',
-                    minute: '2-digit',
-                });
-                const end = new Date(s.slot_end).toLocaleTimeString('en-GB', {
-                    timeZone,
-                    hour12: false,
-                    hour: '2-digit',
-                    minute: '2-digit',
-                });
-
-                if (!dateToCourtVacantSlots.has(dateStr)) {
-                    dateToCourtVacantSlots.set(dateStr, new Map());
-                }
-                const courtMap = dateToCourtVacantSlots.get(dateStr)!;
-                if (!courtMap.has(r.name)) {
-                    courtMap.set(r.name, []);
-                }
-                courtMap.get(r.name)!.push({ start, end });
-            });
+        if (error || !slots || !resources) {
+            logger.error({ error, slots, resources }, '[Database] Error checking availability');
+            throw new Error('Error checking availability');
         }
+
+        (slots).forEach((s) => {
+            const dateStr = new Date(s.slot_start).toLocaleDateString('en-CA', { timeZone });
+            const start = new Date(s.slot_start).toLocaleTimeString('en-GB', {
+                timeZone,
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+            });
+            const end = new Date(s.slot_end).toLocaleTimeString('en-GB', {
+                timeZone,
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+            });
+
+            if (!dateToCourtVacantSlots.has(dateStr)) {
+                dateToCourtVacantSlots.set(dateStr, new Map());
+            }
+
+            const resourceName = resources.find((r) => r.id === s.resource_id)?.name;
+
+            if (!resourceName) {
+                logger.error({ s, resources }, '[Database] Resource not found');
+                return;
+            }
+
+            const courtMap = dateToCourtVacantSlots.get(dateStr)!;
+            if (!courtMap.has(resourceName)) {
+                courtMap.set(resourceName, []);
+            }
+            courtMap.get(resourceName)!.push({ start, end });
+        });
 
         return dateToCourtVacantSlots;
     }
