@@ -6,7 +6,7 @@ import { IntentionResult } from "../intents";
 import * as line from '@line/bot-sdk';
 import { openaiClient } from "../providers/openai";
 import type { AvailabilityByDate, OpenAiAvailableDays } from "../services/availability/types";
-import { clampText, formatDateTitle, formatDateForAction } from "../../shared/lib/dateHelper";
+import { clampText, formatDateTitle, formatDateForAction } from "../../shared/lib";
 import { formatAvailabilityDetails } from "../lib/responseFormat";
 
 const MAX_CAROUSEL_CARDS = 5;
@@ -58,7 +58,7 @@ export const replyAvailabilityIntention = async (intention: IntentionResult, lin
 
         messages.push({
           type: 'text',
-          text: summary,
+          text: clampText(summary, 400),
         });
 
         messages.push(buildAvailabilityCarousel(availableDays));

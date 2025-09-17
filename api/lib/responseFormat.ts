@@ -1,4 +1,4 @@
-import { clampText } from "../../shared/lib/dateHelper";
+import { clampText } from "../../shared/lib";
 import { AvailabilityByDate } from "../services/availability/types";
 
 
