@@ -1,6 +1,6 @@
 {
   "name": "kj-chatbot-webhook",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "A simple webhook receiver that logs to console",
   "main": "index.ts",
   "scripts": {
