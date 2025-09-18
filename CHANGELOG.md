@@ -1,6 +1,10 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## v1.0.11 (2025-09-18)
+
+Please provide the commit messages to summarize.
+
 ## v1.0.10 (2025-09-18)
 
 - Allow availability Checkmk on personal events only
