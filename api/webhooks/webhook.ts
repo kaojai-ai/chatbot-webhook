@@ -35,7 +35,14 @@ export const createWebhook = (port: number = 3000): Application => {
       try {
         // Process events only after successful forwarding
         for (const event of events) {
+
+          if (event.source.type !== 'user' || !event.source.userId) {
+            logger.info("Event source is not a user or no user ID found in event");
+            continue;
+          }
+
           if (event.type !== 'message') {
+            logger.info("Event type is not message");
             continue;
           }
 
