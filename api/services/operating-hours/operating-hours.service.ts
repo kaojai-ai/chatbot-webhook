@@ -1,4 +1,4 @@
-import supabaseClient from '../../../shared/providers/supabase';
+import { getDbClient } from '../../../shared/providers/supabase';
 import logger from '../../../shared/logger';
 
 export class OperatingHoursService {
@@ -8,7 +8,7 @@ export class OperatingHoursService {
       throw new Error('BOOKING_TENANT_ID env is required');
     }
 
-    const { data: operatingHours, error: opErr } = await supabaseClient
+    const { data: operatingHours, error: opErr } = await getDbClient()
       .schema('booking')
       .from('tenant_operating_hours')
       .select('*')
@@ -25,7 +25,7 @@ export class OperatingHoursService {
     // Postgres range literal: lower-inclusive, upper-exclusive
     const windowRange = `[${now.toISOString()},${next30.toISOString()})`;
 
-    const { data: closures, error: clErr } = await supabaseClient
+    const { data: closures, error: clErr } = await getDbClient()
       .schema('booking')
       .from('closures')
       .select('*')

@@ -1,5 +1,7 @@
 import logger from '../../shared/logger';
+import { extractGroupId } from '../lib/lineHeper';
 import { openaiClient } from '../providers/openai';
+import * as line from '@line/bot-sdk';
 
 export interface IntentionResult {
   intent: 'availability' | 'operating_hour' | 'book' | 'joke' | 'other';
@@ -10,8 +12,12 @@ export interface IntentionResult {
   };
 }
 
-export async function checkAvailabilityIntention(message: string): Promise<IntentionResult> {
+export async function checkAvailabilityIntention(messageEvent: line.MessageEvent & { message: line.TextEventMessage }): Promise<IntentionResult> {
   try {
+    if (extractGroupId(messageEvent.source))
+      return { intent: "other" };
+
+    const messageText = messageEvent.message.text;
     const response = await openaiClient.getChatCompletion({
       model: 'gpt-5-mini', // or 'gpt-3.5-turbo' for cost efficiency
       messages: [
@@ -21,7 +27,7 @@ export async function checkAvailabilityIntention(message: string): Promise<Inten
         },
         {
           role: 'user',
-          content: message
+          content: messageText
         }
       ],
       functions: [

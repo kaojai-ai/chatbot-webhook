@@ -1,6 +1,6 @@
 import { CheckSlipTenantConfig, TenantConfig } from './types/tenants';
 import logger from './logger';
-import supabaseClient from './providers/supabase';
+import { getDbClient } from './providers/supabase';
 
 /**
  * Fetch tenant configuration of checkslip module from Supabase.
@@ -18,7 +18,7 @@ export async function fetchCheckSlipTenantConfigs(): Promise<CheckSlipTenantConf
   }
 
   try {
-    const supabaseQuery = supabaseClient
+    const supabaseQuery = getDbClient()
     .schema('checkslip')
     .from('tenant_configs')
     .select('*')

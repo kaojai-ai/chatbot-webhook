@@ -64,7 +64,7 @@ export const createWebhook = (port: number = 3000): Application => {
             continue;
           }
 
-          const intention = await checkAvailabilityIntention(messageText);
+          const intention = await checkAvailabilityIntention({ ...messageEvent, message: { ...messageEvent.message } });
 
           if (intention.intent === 'availability') {
             await replyAvailabilityIntention(intention, lineService, messageEvent);

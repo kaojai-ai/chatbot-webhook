@@ -1,5 +1,4 @@
-import OpenAI from 'openai';
-import supabaseClient from '../../../shared/providers/supabase';
+import { getDbClient } from '../../../shared/providers/supabase';
 import logger from '../../../shared/logger';
 import type { AvailabilityByDate, AvailabilityOverview, AvailableCourtAvailability, EstAvailabilityDate} from './types';
 import { LLMService, openaiClient } from '../../providers/openai';
@@ -94,14 +93,14 @@ export class SupabaseAvailabilityService {
             throw new Error('BOOKING_TENANT_ID env is required');
         }
 
-        const { data: tenantCfg } = await supabaseClient
+        const { data: tenantCfg } = await getDbClient()
             .from('tenant_configs')
             .select('timezone')
             .eq('tenant_id', tenantId)
             .single();
         const timeZone = tenantCfg?.timezone || 'UTC';
 
-        const { data: resources } = await supabaseClient
+        const { data: resources } = await getDbClient()
             .schema('booking')
             .from('resources')
             .select('id, name, slot_granularity_minutes')
@@ -109,7 +108,7 @@ export class SupabaseAvailabilityService {
 
         const dateToCourtVacantSlots = new Map<string, Map<string, Array<{ start: string; end: string }>>>();
 
-        const { data: slots, error } = await supabaseClient
+        const { data: slots, error } = await getDbClient()
             .schema('booking')
             .rpc('get_free_slots', {
                 p_tenant_id: tenantId,

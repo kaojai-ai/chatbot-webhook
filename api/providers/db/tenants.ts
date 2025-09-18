@@ -1,4 +1,4 @@
-import supabaseClient from "../../../shared/providers/supabase";
+import { getDbClient } from "../../../shared/providers/supabase";
 
 
 const isNonEmptyString = (value: unknown): value is string =>
@@ -6,7 +6,7 @@ const isNonEmptyString = (value: unknown): value is string =>
 
 
 const fetchTenantIdsByLineUserId = async (lineUserId: string): Promise<string[]> => {
-  const { data, error } = await supabaseClient.rpc('get_tenant_by_line_uid', { p_line_user_id: lineUserId },
+  const { data, error } = await getDbClient().rpc('get_tenant_by_line_uid', { p_line_user_id: lineUserId },
   );
 
   if (error) {

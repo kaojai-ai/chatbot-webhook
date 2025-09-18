@@ -1,4 +1,4 @@
-import supabaseClient from "../../../shared/providers/supabase";
+import { getDbClient } from "../../../shared/providers/supabase";
 import { ResourceStatus } from "../../../shared/types/tenants";
 
 export const CHECKSLIP_LINE_NOTIFY_CHANNEL = 'line_notify';
@@ -23,7 +23,7 @@ const upsertTenantChannelConfig = async (
         status: status,
     };
 
-    const { error: upsertError } = await supabaseClient
+    const { error: upsertError } = await getDbClient()
         .schema('checkslip')
         .from('tenant_channels')
         .upsert(payload, { onConflict: 'tenant_id,channel' });
@@ -36,7 +36,7 @@ const upsertTenantChannelConfig = async (
 const fetchTenantChannelConfig = async (
     tenantId: string,
 ): Promise<{ config: CheckSlipLineNotifyConfig; status?: ResourceStatus }> => {
-    const { data, error } = await supabaseClient
+    const { data, error } = await getDbClient()
         .schema('checkslip')
         .from('tenant_channels')
         .select('config, status')

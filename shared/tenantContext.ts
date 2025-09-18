@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'async_hooks';
-import supabaseClient from './providers/supabase';
+import { getDbClient } from './providers/supabase';
 
 interface TenantStore {
   tenantId: string;
@@ -9,7 +9,7 @@ interface TenantStore {
 const tenantContext = new AsyncLocalStorage<TenantStore>();
 
 export async function withTenantContext<T>(tenantId: string, fn: () => T): Promise<T> {
-    const { data } = await supabaseClient
+    const { data } = await getDbClient()
         .from('tenants')
         .select('slug')
         .eq('id', tenantId)
