@@ -27,7 +27,7 @@ const gettingStartedCarousel: line.TemplateMessage = {
       {
         title: 'รับแจ้งเตือน CheckSlip',
         thumbnailImageUrl: 'https://checkslip.kaojai.ai/images/blogs/danger-of-fake-slips.png',
-        text: 'ลงทะเบียนรับการแจ้งเตือนปัญหา CheckSlip ผ่าน LINE',
+        text: 'ลงทะเบียนรับการแจ้งเตือน CheckSlip ผ่าน LINE',
         actions: [
           {
             type: 'message',
