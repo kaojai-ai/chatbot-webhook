@@ -10,7 +10,7 @@ const gettingStartedCarousel: line.TemplateMessage = {
       {
         title: 'น้องเข้าใจ ทำอะไรได้บ้าง?',
         thumbnailImageUrl: 'https://kaojai.ai/images/generic_landscape_1.png',
-        text: 'สวัสดี 👋, น้องเข้าใจ 💚 AI ChatBot 🤖 ยินดีช่วยเหลือธุรกิจร้านค้า และน้องเก่งมากๆ มารู้จักน้องกันเถอะ 🥰',
+        text: '👋 น้องเข้าใจเองจ้า~ 💚 น้องเก่งมากๆ มารู้จักน้องกัน 🥰',
         actions: [
           {
             type: 'message',
