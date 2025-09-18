@@ -41,8 +41,22 @@ export const createWebhook = (port: number = 3000): Application => {
             continue;
           }
 
+          if (event.type === 'follow') {
+            const followEvent = event as line.FollowEvent;
+
+            logger.info('Received follow event for user: %s', followEvent.source.userId);
+
+            if (followEvent.replyToken) {
+              await sendGettingStartedCarousel(lineService, followEvent.replyToken);
+            } else {
+              logger.warn('Missing reply token for follow event');
+            }
+
+            continue;
+          }
+
           if (event.type !== 'message') {
-            logger.info("Event type is not message");
+            logger.info({ type: event.type }, 'Unsupported event type');
             continue;
           }
 
