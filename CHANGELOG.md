@@ -1,6 +1,11 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## v1.0.14 (2025-09-18)
+
+- fix rich msg
+- fix rich msg
+
 ## v1.0.13 (2025-09-18)
 
 - Send getting started carousel on follow and menu ([#7](https://github.com/kaojai-ai/chatbot-webhook/pull/7))
