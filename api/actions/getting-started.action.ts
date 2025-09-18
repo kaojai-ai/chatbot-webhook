@@ -3,10 +3,27 @@ import { LineService } from '../services/line/line.service';
 
 const gettingStartedCarousel: line.TemplateMessage = {
   type: 'template',
-  altText: 'เมนูช่วยเหลือน้องเข้าใจ',
+  altText: 'เริ่มต้นใช้งาน น้องเข้าใจ 💚',
   template: {
     type: 'carousel',
     columns: [
+      {
+        title: 'น้องเข้าใจ ทำอะไรได้บ้าง?',
+        thumbnailImageUrl: 'https://kaojai.ai/images/generic_landscape_1.png',
+        text: 'สวัสดี 👋, น้องเข้าใจ 💚 AI ChatBot 🤖 ยินดีช่วยเหลือธุรกิจร้านค้า และน้องเก่งมากๆ มารู้จักน้องกันเถอะ 🥰',
+        actions: [
+          {
+            type: 'message',
+            label: 'น้องทำอะไรได้บ้าง?',
+            text: 'KaoJai ทำอะไรได้บ้าง',
+          },
+          {
+            type: 'message',
+            label: 'ติดต่อ ทีมงาน',
+            text: 'ติดต่อ',
+          }
+        ],
+      },
       {
         title: 'รับแจ้งเตือน CheckSlip',
         thumbnailImageUrl: 'https://checkslip.kaojai.ai/images/blogs/danger-of-fake-slips.png',
@@ -36,8 +53,8 @@ const gettingStartedCarousel: line.TemplateMessage = {
           },
           {
             type: 'message',
-            label: 'ติดต่อทางโทรศัพท์',
-            text: 'ติดต่อทางโทรศัพท์',
+            label: 'ติดต่อ ทีมงาน',
+            text: 'ติดต่อ',
           }
         ],
       },

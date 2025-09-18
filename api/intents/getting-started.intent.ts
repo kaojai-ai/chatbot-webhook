@@ -14,5 +14,7 @@ export const isGettingStartedIntent = (event: line.MessageEvent): boolean => {
 
   const isMentioningSelf = normalizedMentionees.some((mention) => mention.type === 'user' && mention.isSelf) ?? false;
 
-  return isMentioningSelf || normalizedText === 'kj';
+  const triggers = ['kj', 'menu'];
+
+  return isMentioningSelf || triggers.includes(normalizedText);
 };
