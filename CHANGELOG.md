@@ -1,6 +1,10 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## v1.0.12 (2025-09-18)
+
+- Add webhook support for user messages
+
 ## v1.0.11 (2025-09-18)
 
 Please provide the commit messages to summarize.
