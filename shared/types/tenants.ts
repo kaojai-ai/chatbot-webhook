@@ -5,10 +5,9 @@ export type ResourceStatus = Database['public']['Enums']['resource_status'];
 export interface Tenant {
     id: string;
     name: string;
-    type: string;
-    description?: string;
+    type?: string | null;
+    description?: string | null;
     created_at: string;
-    is_active?: boolean;
 }
 
 export interface TenantMemberInfo {

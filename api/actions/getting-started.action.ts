@@ -1,5 +1,8 @@
 import * as line from '@line/bot-sdk';
-import { LineService } from '../services/line/line.service';
+import { getMessagingService } from '../services/line/line.service';
+import { createTenantLinkingConfirmMessage } from './connect.action';
+import { extractGroupId, getLineUserId } from '../lib/lineHeper';
+import { tenantsBelongToLineUserId } from '../core/checkslip';
 
 const gettingStartedCarousel: line.TemplateMessage = {
   type: 'template',
@@ -62,11 +65,37 @@ const gettingStartedCarousel: line.TemplateMessage = {
   },
 };
 
-export const sendGettingStartedCarousel = async (
-  lineService: LineService,
-  replyToken: string,
-): Promise<void> => {
-  await lineService.replyMessage(replyToken, [gettingStartedCarousel]);
+export const sendCheckSlipInfo = async (
+  messageEvent: line.MessageEvent,
+) => {
+  const lineUserId = getLineUserId(messageEvent)
+  const replyToken = messageEvent.replyToken;
+  const msgChkSlipInfoToSend: line.messagingApi.Message[] = []
+
+  const foundTenants = await tenantsBelongToLineUserId(messageEvent);
+  if (foundTenants.length === 0) {
+    msgChkSlipInfoToSend.push({
+      type: 'text',
+      text: "แค่ส่งสลิปมาให้น้อง... เดี๋ยวน้องเข้าใจ ตรวจสลิป ให้ทันทีเลยครับ 💚\n\n👀 แต่ถ้าอยากให้น้องตรวจละเอียดๆ\n\n#สลิปใช้ซ้ำ #สลิปตรงบัญชี\n\nต้องลงทะเบียนกับน้องด้วยน้า~ 🙌",
+    });
+
+    if (lineUserId) {
+      msgChkSlipInfoToSend.push(createTenantLinkingConfirmMessage(lineUserId, extractGroupId(messageEvent.source)))
+    }
+  } else {
+    msgChkSlipInfoToSend.push({
+      type: 'text',
+      text: `สวัสดีครับ 👋\n\nธุรกิจ: ${foundTenants.map(t => t.name).join(', ')}\n\nแค่ส่งสลิปมาให้น้อง... เดี๋ยวน้องเข้าใจ ตรวจสลิป ให้ทันทีเลยครับ 💚`,
+    });
+  }
+
+  return getMessagingService().replyMessage(replyToken, msgChkSlipInfoToSend);
 };
+
+export const sendGettingStartedCarousel = async (
+    replyToken: string,
+  ): Promise<void> => {
+    await getMessagingService().replyMessage(replyToken, [gettingStartedCarousel]);
+  };
 
 export const getGettingStartedCarousel = (): line.TemplateMessage => gettingStartedCarousel;

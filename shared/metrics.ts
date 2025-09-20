@@ -3,13 +3,13 @@ import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { type Counter, type Histogram, type Attributes, MetricOptions } from '@opentelemetry/api';
 import { getTenantStore } from './tenantContext';
-import { Resource } from '@opentelemetry/resources';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 
 const metricExporter = new OTLPMetricExporter();
 const serviceName = process.env.OTEL_SERVICE_NAME || 'kj-checkslip-bot';
 
-const resource = new Resource({
+const resource = resourceFromAttributes({
   [ATTR_SERVICE_NAME]: serviceName,
 });
 

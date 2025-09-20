@@ -1,11 +1,11 @@
-import { LineService } from "../services/line/line.service";
+import { getMessagingService } from "../services/line/line.service";
 import { AvailabilityService } from "../services/availability";
 import logger from "../../shared/logger";
 import { OperatingHoursService } from "../services/operating-hours";
 import { IntentionResult } from "../intents";
 import * as line from '@line/bot-sdk';
 import { openaiClient } from "../providers/openai";
-import type { AvailabilityByDate, OpenAiAvailableDays } from "../services/availability/types";
+import type { OpenAiAvailableDays } from "../services/availability/types";
 import { clampText, formatDateTitle, formatDateForAction } from "../../shared/lib";
 
 const MAX_CAROUSEL_CARDS = 5;
@@ -41,7 +41,9 @@ const buildAvailabilityCarousel = (availabilityByDate: OpenAiAvailableDays[]): l
   };
 };
 
-export const replyAvailabilityIntention = async (intention: IntentionResult, lineService: LineService, messageEvent: line.MessageEvent) => {
+export const replyAvailabilityIntention = async (intention: IntentionResult, messageEvent: line.MessageEvent) => {
+  const lineService = getMessagingService();
+
   if (intention.intent === 'availability') {
     // Handle availability check
     const date = intention.details?.date;

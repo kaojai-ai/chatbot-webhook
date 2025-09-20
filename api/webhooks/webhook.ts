@@ -1,31 +1,21 @@
 import express, { Request, Response, Application } from 'express';
 import * as line from '@line/bot-sdk';
-import { LineService } from '../services/line/line.service';
-import { LineMessageHandler } from '../services/line/line.handler';
-import { ILineConfig } from '../interfaces/line.interface';
 import { checkAvailabilityIntention } from '../intents';
 import logger from '../../shared/logger';
-import { sendGettingStartedCarousel, registerCheckSlipNotify, unregisterCheckSlipNotify } from '../actions';
+import { sendGettingStartedCarousel, registerCheckSlipNotify, unregisterCheckSlipNotify, sendCheckSlipInfo } from '../actions';
 import { isGettingStartedIntent } from '../intents';
 import { replyAvailabilityIntention } from '../actions/availability.action';
-
-// LINE client configuration
-const lineConfig: ILineConfig = {
-  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || 'YOUR_CHANNEL_ACCESS_TOKEN',
-  channelSecret: process.env.LINE_CHANNEL_SECRET || 'YOUR_CHANNEL_SECRET'
-};
-
+import { getMessagingService } from '../services/line/line.service';
 
 export const createWebhook = (port: number = 3000): Application => {
   const app = express();
-  const lineMessageHandler = new LineMessageHandler();
-  const lineService = new LineService(lineConfig, lineMessageHandler);
+  const lineService = getMessagingService();
 
   app.get('/health', (_req: Request, res: Response) => {
     res.status(200).json({ status: 'ok', service: 'webhook' });
   });
 
-  app.use(line.middleware(lineConfig));
+  app.use(lineService.getMiddleware());
 
   // LINE Webhook endpoint
   app.post('/webhook', async (req: Request, res: Response) => {
@@ -47,7 +37,7 @@ export const createWebhook = (port: number = 3000): Application => {
             logger.info('Received follow event for user: %s', followEvent.source.userId);
 
             if (followEvent.replyToken) {
-              await sendGettingStartedCarousel(lineService, followEvent.replyToken);
+              await sendGettingStartedCarousel(followEvent.replyToken);
             } else {
               logger.warn('Missing reply token for follow event');
             }
@@ -70,26 +60,36 @@ export const createWebhook = (port: number = 3000): Application => {
           const normalizedMessage = messageText.trim();
           logger.info({ type: event.type, message: messageText }, 'Received webhook user message %s', messageText);
 
-          if (isGettingStartedIntent(messageEvent)) {
-            await sendGettingStartedCarousel(lineService, messageEvent.replyToken);
+          const gettingStartIntent = isGettingStartedIntent(messageEvent);
+          if (gettingStartIntent) {
+            switch (gettingStartIntent.intent) {
+              case 'menu':
+                await sendGettingStartedCarousel(messageEvent.replyToken);
+                break;
+              case 'checkslip':
+                await sendCheckSlipInfo(messageEvent);
+                break;
+            }
             continue;
           }
 
           if (normalizedMessage === 'ลงทะเบียนรับแจ้งเตือน CheckSlip') {
-            await registerCheckSlipNotify(lineService, messageEvent);
+            await registerCheckSlipNotify(messageEvent);
             continue;
           }
 
           if (normalizedMessage === 'ยกเลิกรับแจ้งเตือน CheckSlip') {
-            await unregisterCheckSlipNotify(lineService, messageEvent);
+            await unregisterCheckSlipNotify(messageEvent);
             continue;
           }
 
-          const intention = await checkAvailabilityIntention({ ...messageEvent, message: { ...messageEvent.message } });
+          if (!!process.env.AVAILABILITY_MODE) {
+            const intention = await checkAvailabilityIntention({ ...messageEvent, message: { ...messageEvent.message } });
 
-          if (intention.intent === 'availability') {
-            await replyAvailabilityIntention(intention, lineService, messageEvent);
-            continue;
+            if (intention.intent === 'availability') {
+              await replyAvailabilityIntention(intention, messageEvent);
+              continue;
+            }
           }
         }
         res.status(200).end();

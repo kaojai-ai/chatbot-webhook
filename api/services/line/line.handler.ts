@@ -5,6 +5,7 @@ import logger from '../../../shared/logger';
 export class LineMessageHandler implements ILineMessageHandler {
   async handleMessage(event: line.MessageEvent): Promise<void> {
     if (event.message.type !== 'text') {
+      logger.info('Received non-text message: %s', event)
       return;
     }
   }

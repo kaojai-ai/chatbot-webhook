@@ -2,16 +2,26 @@ import { messagingApi, WebhookEvent, MessageEvent, FollowEvent, UnfollowEvent, P
 import { ILineConfig, ILineMessageHandler, ILineService } from '../../interfaces/line.interface';
 import logger from '../../../shared/logger';
 import * as line from '@line/bot-sdk';
+import { LineMessageHandler } from './line.handler';
 
-export class LineService implements ILineService {
+
+class LineService implements ILineService {
   private client: messagingApi.MessagingApiClient;
   private handler: ILineMessageHandler;
+  private lineConfig: ILineConfig = {
+    channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || 'YOUR_CHANNEL_ACCESS_TOKEN',
+    channelSecret: process.env.LINE_CHANNEL_SECRET || 'YOUR_CHANNEL_SECRET'
+  };
 
-  constructor(config: ILineConfig, handler: ILineMessageHandler) {
+  constructor(handler: ILineMessageHandler) {
     this.client = new messagingApi.MessagingApiClient({
-      channelAccessToken: config.channelAccessToken,
+      channelAccessToken: this.lineConfig.channelAccessToken,
     });
     this.handler = handler;
+  }
+
+  public getMiddleware() {
+    return line.middleware(this.lineConfig);
   }
 
   public async handleWebhook(events: WebhookEvent[]): Promise<void> {
@@ -53,4 +63,8 @@ export class LineService implements ILineService {
         logger.info(`Unhandled event type: ${event.type}`);
     }
   }
+}
+
+export function getMessagingService() {
+  return new LineService(new LineMessageHandler());
 }
