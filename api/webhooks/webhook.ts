@@ -26,12 +26,7 @@ export const createWebhook = (port: number = 3000): Application => {
         // Process events only after successful forwarding
         for (const event of events) {
 
-          if (event.source.type !== 'user' || !event.source.userId) {
-            logger.info("Event source is not a user or no user ID found in event");
-            continue;
-          }
-
-          if (event.type === 'follow') {
+          if (event.type === 'follow' && isUserMessage(event)) {
             const followEvent = event as line.FollowEvent;
 
             logger.info('Received follow event for user: %s', followEvent.source.userId);
@@ -58,7 +53,23 @@ export const createWebhook = (port: number = 3000): Application => {
 
           const messageText = messageEvent.message.text;
           const normalizedMessage = messageText.trim();
+
           logger.info({ type: event.type, message: messageText }, 'Received webhook user message %s', messageText);
+
+          if (normalizedMessage === 'ลงทะเบียนรับแจ้งเตือน CheckSlip') {
+            await registerCheckSlipNotify(messageEvent);
+            continue;
+          }
+
+          if (normalizedMessage === 'ยกเลิกรับแจ้งเตือน CheckSlip') {
+            await unregisterCheckSlipNotify(messageEvent);
+            continue;
+          }
+
+          if (!isUserMessage(messageEvent)) {
+            logger.info("Event source is not a user or no user ID found in event");
+            continue;
+          }
 
           const gettingStartIntent = isGettingStartedIntent(messageEvent);
           if (gettingStartIntent) {
@@ -70,16 +81,6 @@ export const createWebhook = (port: number = 3000): Application => {
                 await sendCheckSlipInfo(messageEvent);
                 break;
             }
-            continue;
-          }
-
-          if (normalizedMessage === 'ลงทะเบียนรับแจ้งเตือน CheckSlip') {
-            await registerCheckSlipNotify(messageEvent);
-            continue;
-          }
-
-          if (normalizedMessage === 'ยกเลิกรับแจ้งเตือน CheckSlip') {
-            await unregisterCheckSlipNotify(messageEvent);
             continue;
           }
 
@@ -114,3 +115,7 @@ export const createWebhook = (port: number = 3000): Application => {
 };
 
 export default createWebhook;
+
+function isUserMessage(messageEvent: line.WebhookEvent) {
+  return messageEvent.source.type === 'user' && messageEvent.source.userId;
+}
