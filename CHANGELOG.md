@@ -1,6 +1,10 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## v1.0.16 (2025-09-23)
+
+- register checkslip
+
 ## v1.0.15 (2025-09-20)
 
 - Add Checkslip webhook registration flow
